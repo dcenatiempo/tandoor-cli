@@ -1,0 +1,367 @@
+# tandoor-cli
+
+A command-line interface for [Tandoor Recipe Manager](https://tandoor.dev). Manage recipes, meal plans, and shopping lists from your terminal.
+
+---
+
+## Prerequisites
+
+- Node.js 18+
+- npm 8+
+- A running Tandoor instance (local or remote)
+
+---
+
+## Installation
+
+### Run without installing (recommended)
+
+```bash
+npx tandoor-cli <command>
+```
+
+No global install required. `npx` downloads and runs the latest version automatically.
+
+### Local development install
+
+```bash
+git clone https://github.com/dcenatiempo/tandoor-cli.git
+cd tandoor-cli
+npm install
+npm run build
+npm install -g .
+```
+
+After the global install, the `tandoor` command is available directly.
+
+---
+
+## Configuration
+
+`tandoor-cli` supports three configuration methods. Precedence order (highest to lowest):
+
+1. **Environment variables** — `TANDOOR_URL` and `TANDOOR_API_TOKEN` set in the current shell
+2. **Config file** — `~/.config/tandoor-cli/config.json`, written by `tandoor configure`
+3. **`.env` file** — a `.env` file in the current working directory
+
+`TANDOOR_URL` and at least one auth method are required. If neither is found, the CLI exits with a descriptive error.
+
+### Option 1: `tandoor configure` (recommended for interactive use)
+
+Run the configure command once to save your credentials to a persistent config file:
+
+```bash
+npx tandoor-cli configure
+```
+
+You will be prompted for:
+- `TANDOOR_URL` — the base URL of your Tandoor instance (e.g. `http://localhost:8080`)
+- `TANDOOR_API_TOKEN` — your API token (see [Authentication](#authentication) below)
+
+Credentials are saved to `~/.config/tandoor-cli/config.json` (or `$XDG_CONFIG_HOME/tandoor-cli/config.json` if `XDG_CONFIG_HOME` is set) with permissions `0600`. Re-running `configure` shows the current values as defaults so you can accept or update them.
+
+### Option 2: Environment variables
+
+```bash
+export TANDOOR_URL=http://localhost:8080
+export TANDOOR_API_TOKEN=your_token_here
+npx tandoor-cli list
+```
+
+Environment variables take precedence over the config file and `.env`.
+
+### Option 3: `.env` file
+
+Create a `.env` file in your working directory (copy from `.env.example`):
+
+```dotenv
+# Required: base URL of your Tandoor instance
+TANDOOR_URL=http://localhost:8080
+
+# Preferred: API token (see Authentication section below)
+TANDOOR_API_TOKEN=your_token_here
+
+# Fallback: basic auth (used only if TANDOOR_API_TOKEN is not set)
+TANDOOR_USERNAME=
+TANDOOR_PASSWORD=
+```
+
+The CLI loads `.env` automatically on startup.
+
+---
+
+## Authentication
+
+### API Token (preferred)
+
+Tandoor's API uses **OAuth2 Bearer tokens**. The token shown in Settings → API is a DRF token and won't work — you need to generate an OAuth2 access token directly via the Django shell.
+
+Run this once against your Docker container to create a long-lived token:
+
+```bash
+docker exec <your-container-name> /opt/recipes/venv/bin/python /opt/recipes/manage.py shell -c "
+from oauth2_provider.models import Application, AccessToken
+from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
+import secrets
+
+user = User.objects.get(username='YOUR_USERNAME')
+
+# Create the OAuth2 app if it doesn't exist yet
+app, _ = Application.objects.get_or_create(
+    name='tandoor-cli',
+    defaults=dict(
+        user=user,
+        client_type=Application.CLIENT_CONFIDENTIAL,
+        authorization_grant_type=Application.GRANT_PASSWORD,
+    )
+)
+
+token = AccessToken.objects.create(
+    user=user,
+    application=app,
+    token=secrets.token_hex(20),
+    expires=timezone.now() + timedelta(days=3650),
+    scope='read write',
+)
+print('ACCESS TOKEN:', token.token)
+"
+```
+
+Replace `<your-container-name>` with the name of your running Tandoor Docker container and `YOUR_USERNAME` with your Tandoor username. Copy the printed token into `TANDOOR_API_TOKEN`.
+
+> The token is valid for 10 years. To regenerate, run the command again — it will reuse the existing `tandoor-cli` OAuth2 app.
+
+### Username / Password (fallback)
+
+If `TANDOOR_API_TOKEN` is not set, the CLI falls back to HTTP Basic Authentication using `TANDOOR_USERNAME` and `TANDOOR_PASSWORD`. The API token is preferred because it does not expose your password and can be revoked independently.
+
+---
+
+## Commands
+
+### `tandoor configure`
+
+Interactively save your Tandoor URL and API token to `~/.config/tandoor-cli/config.json`.
+
+```bash
+npx tandoor-cli configure
+```
+
+---
+
+### Recipes
+
+#### `tandoor list`
+
+List recipes, sorted by most recently created.
+
+```bash
+tandoor list                  # default: 20 recipes
+tandoor list --limit 50       # up to 100 (values above 100 are capped)
+tandoor list --json           # output raw JSON
+```
+
+#### `tandoor search <query>`
+
+Search recipes by keyword.
+
+```bash
+tandoor search pasta
+tandoor search "chicken soup" --json
+```
+
+#### `tandoor get <id>`
+
+Get full details of a recipe: name, description, servings, times, ingredients, and steps.
+
+```bash
+tandoor get 42
+tandoor get 42 --json
+```
+
+#### `tandoor random`
+
+Retrieve a random recipe.
+
+```bash
+tandoor random
+tandoor random --json
+```
+
+#### `tandoor add`
+
+Create a new recipe interactively or from a JSON file.
+
+```bash
+# Interactive prompts
+tandoor add
+
+# From a JSON file
+tandoor add --json recipe.json
+```
+
+Example `recipe.json`:
+
+```json
+{
+  "name": "Simple Pasta",
+  "description": "Quick weeknight dinner",
+  "servings": 2,
+  "working_time": 10,
+  "waiting_time": 15,
+  "steps": [
+    {
+      "instruction": "Boil pasta until al dente.",
+      "order": 0,
+      "ingredients": [
+        { "food": { "name": "pasta" }, "unit": { "name": "g" }, "amount": 200 }
+      ]
+    }
+  ]
+}
+```
+
+#### `tandoor update <id> --json <file>`
+
+Patch an existing recipe with fields from a JSON file.
+
+```bash
+tandoor update 42 --json patch.json
+```
+
+`patch.json` only needs to include the fields you want to change.
+
+#### `tandoor delete <id>`
+
+Delete a recipe. Prompts for confirmation unless `--force` is passed.
+
+```bash
+tandoor delete 42
+tandoor delete 42 --force   # skip confirmation
+```
+
+#### `tandoor import <url>`
+
+Import a recipe directly from a URL using Tandoor's built-in scraper. Supports hundreds of recipe sites.
+
+```bash
+tandoor import https://www.bbcgoodfood.com/recipes/easy-chocolate-cake
+tandoor import https://www.seriouseats.com/the-best-pizza-dough-recipe --json
+tandoor import https://www.bbcgoodfood.com/recipes/easy-chocolate-cake --dry-run
+```
+
+- `--dry-run` — scrapes and previews the recipe without saving it to Tandoor
+- `--json` — outputs the created (or previewed) recipe as raw JSON
+- If the scraper detects a possible duplicate already in your collection, a warning is printed to stderr but the import still proceeds.
+
+---
+
+### Meal Plans
+
+#### `tandoor mealplan list`
+
+List all meal plan entries.
+
+```bash
+tandoor mealplan list
+tandoor mealplan list --json
+```
+
+#### `tandoor mealplan add`
+
+Add a meal plan entry.
+
+```bash
+tandoor mealplan add --recipe 42 --date 2024-12-25 --meal-type 1
+```
+
+Date must be in `YYYY-MM-DD` format.
+
+#### `tandoor mealplan delete <id>`
+
+Delete a meal plan entry by ID.
+
+```bash
+tandoor mealplan delete 7
+```
+
+---
+
+### Shopping List
+
+#### `tandoor shopping list`
+
+List all shopping list entries.
+
+```bash
+tandoor shopping list
+tandoor shopping list --json
+```
+
+#### `tandoor shopping add`
+
+Add an item to the shopping list.
+
+```bash
+tandoor shopping add --food flour --amount 500 --unit g
+tandoor shopping add --food milk --amount 1 --unit liter
+```
+
+#### `tandoor shopping check <id>`
+
+Mark a shopping list entry as checked.
+
+```bash
+tandoor shopping check 3
+```
+
+#### `tandoor shopping clear`
+
+Delete all checked entries. Prompts for confirmation unless `--force` is passed.
+
+```bash
+tandoor shopping clear
+tandoor shopping clear --force
+```
+
+---
+
+## Development
+
+Install dependencies and build:
+
+```bash
+npm install
+npm run build
+```
+
+Run unit tests:
+
+```bash
+npm test
+```
+
+Run integration tests against a live Tandoor instance (requires `TANDOOR_URL` and auth configured):
+
+```bash
+TANDOOR_INTEGRATION=true npm test
+```
+
+Integration tests are skipped unless `TANDOOR_INTEGRATION=true` is set.
+
+---
+
+## Contributing / Release Process
+
+1. Bump the version in `package.json` following [semver](https://semver.org).
+2. Run `npm run build` to compile TypeScript to `dist/`.
+3. Run `npm test` to confirm all tests pass.
+4. Run `npm publish` to publish to the npm registry (`prepublishOnly` will run the build automatically).
+
+---
+
+## License
+
+MIT
