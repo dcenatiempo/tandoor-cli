@@ -79,10 +79,5 @@ export function loadConfig(configFilePath?: string): ApiConfig {
   process.exit(1);
 }
 
-// Singleton — evaluated at module load time in production.
-// In test environments (NODE_ENV=test or VITEST=true), skip auto-loading so
-// tests can import the module and call loadConfig() with controlled env values.
-export const config: ApiConfig =
-  process.env.VITEST || process.env.NODE_ENV === 'test'
-    ? ({} as ApiConfig)
-    : loadConfig();
+// No module-level singleton — loadConfig() is called lazily by getApiClient()
+// so that --version and --help work without credentials being configured.
