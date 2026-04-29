@@ -15,5 +15,5 @@
     "sourceMap": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.pbt.ts"]
+  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.pbt.ts", "src/**/*.integration.ts"]
 }
