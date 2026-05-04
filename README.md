@@ -517,6 +517,31 @@ tandoor food onhand eggs --unset
 
 ---
 
+## Agent Skills
+
+This repository includes an [Agent Skills](https://agentskills.io/) package that enables AI agents (like Kiro, Claude, or other compatible tools) to interact with Tandoor via the CLI.
+
+### Using the skill in Kiro
+
+1. Open the **Agent Steering & Skills** section in the Kiro panel
+2. Click **+** and select **Import a skill**
+3. Choose **GitHub** and paste this URL:
+   ```
+   https://github.com/dcenatiempo/tandoor-cli
+   ```
+4. The skill will be imported and available immediately
+
+Alternatively, you can import directly to a specific skill folder:
+```
+https://github.com/dcenatiempo/tandoor-cli/tree/main/skills/tandoor-recipe-cli
+```
+
+### Using the skill in other tools
+
+The skill follows the open Agent Skills specification and can be imported into any compatible AI tool. The skill files are located in `skills/tandoor-recipe-cli/`.
+
+---
+
 ## Development
 
 Install dependencies and build:
