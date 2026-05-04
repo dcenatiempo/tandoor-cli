@@ -14,7 +14,7 @@ A command-line interface for [Tandoor Recipe Manager](https://tandoor.dev). Mana
 
 ## Installation
 
-### Run without installing (recommended)
+### Run without installing 
 
 ```bash
 npx tandoor-cli <command>
@@ -22,14 +22,10 @@ npx tandoor-cli <command>
 
 No global install required. `npx` downloads and runs the latest version automatically.
 
-### Local development install
+### Global install
 
 ```bash
-git clone https://github.com/dcenatiempo/tandoor-cli.git
-cd tandoor-cli
-npm install
-npm run build
-npm install -g .
+npm instll tandoor-cli -g
 ```
 
 After the global install, the `tandoor` command is available directly.
@@ -405,6 +401,8 @@ tandoor food onhand eggs --unset
 Install dependencies and build:
 
 ```bash
+git clone https://github.com/dcenatiempo/tandoor-cli.git
+cd tandoor-cli
 npm install
 npm run build
 ```
