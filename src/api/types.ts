@@ -59,6 +59,49 @@ export interface ShoppingListEntry {
   checked: boolean;
 }
 
+export interface TandoorUser {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  display_name: string;
+  is_staff: boolean;
+  is_superuser: boolean;
+  is_active: boolean;
+}
+
+export interface Household {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserSpace {
+  id: number;
+  user: TandoorUser;
+  space: number;
+  groups: Array<{ id: number; name: string }>;
+  household: Household | null;
+  active: boolean;
+  internal_note: string | null;
+  invite_link: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InviteLink {
+  id: number;
+  uuid: string;
+  email: string;
+  household: Household | number;
+  group: { id: number; name: string } | string;
+  valid_until: string | null;
+  used_by: TandoorUser | null;
+  created_by: TandoorUser;
+  created_at: string;
+}
+
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;

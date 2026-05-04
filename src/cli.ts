@@ -13,6 +13,7 @@ import { registerShoppingCommand } from './commands/shopping';
 import { registerImportCommand } from './commands/import';
 import { registerConfigureCommand } from './commands/configure';
 import { registerFoodCommand } from './commands/food';
+import { registerHouseholdCommand } from './commands/household';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pkg = require('../package.json') as { version: string };
@@ -37,6 +38,7 @@ registerShoppingCommand(program);
 registerImportCommand(program);
 registerConfigureCommand(program);
 registerFoodCommand(program);
+registerHouseholdCommand(program);
 
 process.on('unhandledRejection', (err) => {
   process.stderr.write((err instanceof Error ? err.message : String(err)) + '\n');

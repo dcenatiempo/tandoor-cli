@@ -332,6 +332,127 @@ tandoor shopping clear --force
 
 ---
 
+### Households & Users
+
+Tandoor uses **households** to organize users and recipes. A household is a shared space where multiple users can collaborate. Users are added to households via **invite links** — you cannot create users directly, but you can generate invite links and send them to people.
+
+> **Note:** Household management endpoints (`household`, `invite-link`) require special permissions in Tandoor. The CLI will attempt to read household data through the user-space endpoint if the direct endpoint is restricted. For write operations (create, edit, delete, invite), you may need admin/staff privileges. If you receive a "Permission denied (403)" error on write operations, contact your Tandoor administrator.
+
+#### `tandoor household list`
+
+List all households in the space. If you don't have direct access to the household endpoint, this will extract households from user-space memberships.
+
+```bash
+tandoor household list
+tandoor household list --json
+```
+
+#### `tandoor household get <id>`
+
+Get details of a household by ID (requires admin privileges).
+
+```bash
+tandoor household get 1
+tandoor household get 1 --json
+```
+
+#### `tandoor household add <name>`
+
+Create a new household (requires admin privileges).
+
+```bash
+tandoor household add "My Family"
+tandoor household add "Roommates" --json
+```
+
+#### `tandoor household edit <id>`
+
+Rename a household (requires admin privileges).
+
+```bash
+tandoor household edit 1 --name "Updated Name"
+tandoor household edit 1 --name "New Household Name" --json
+```
+
+#### `tandoor household delete <id>`
+
+Delete a household (requires admin privileges). Prompts for confirmation unless `--force` is passed.
+
+```bash
+tandoor household delete 1
+tandoor household delete 1 --force
+```
+
+#### `tandoor household users list`
+
+List all users in the space.
+
+```bash
+tandoor household users list
+tandoor household users list --json
+```
+
+#### `tandoor household users memberships`
+
+List all user-space memberships, showing which household each user belongs to.
+
+```bash
+tandoor household users memberships
+tandoor household users memberships --json
+```
+
+#### `tandoor household users assign <user-space-id> <household-id>`
+
+Assign a user (by their user-space ID) to a different household (requires admin privileges).
+
+```bash
+tandoor household users assign 2 1
+tandoor household users assign 2 1 --json
+```
+
+To find the user-space ID, run `tandoor household users memberships` and look for the `[id]` column.
+
+#### `tandoor household invite list`
+
+List all invite links (requires admin privileges).
+
+```bash
+tandoor household invite list
+tandoor household invite list --json
+```
+
+#### `tandoor household invite create <household-id>`
+
+Create an invite link for a household. **Requires space owner authentication.**
+
+> **Important:** This command requires authentication as the **space owner** (the user who created the Tandoor space). Even if you're a superuser or staff member, you must use the space owner's token to create invite links. Other users will receive a 403 Permission Denied error.
+
+```bash
+tandoor household invite create 1
+tandoor household invite create 1 --email user@example.com
+tandoor household invite create 1 --expires 2026-12-31
+tandoor household invite create 1 --group-id 2
+tandoor household invite create 1 --email user@example.com --expires 2026-12-31 --json
+```
+
+- `--email <email>` — pre-fill the invitee's email address
+- `--expires <YYYY-MM-DD>` — set an expiry date for the link
+- `--group-id <id>` — assign the new user to a group by ID (default: 2 for "user" group; use 3 for "admin")
+- `--json` — output the created link as raw JSON
+
+The generated URL is printed to stdout and can be shared directly. The invitee visits the link, registers, and is automatically added to the household.
+
+#### `tandoor household invite delete <id>`
+
+Delete an invite link (requires admin privileges). Prompts for confirmation unless `--force` is passed.
+
+```bash
+tandoor household invite delete 1
+tandoor household invite delete 1 --force
+```
+
+---
+
 ### Food Ingredients
 
 #### `tandoor food list`

@@ -41,6 +41,22 @@ export function getApiClient(): AxiosInstance {
           );
         }
 
+        if (status === 403) {
+          const body = err.response.data;
+          const details =
+            typeof body === 'object' && body?.detail
+              ? body.detail
+              : typeof body === 'string'
+                ? body
+                : 'Access denied';
+          return Promise.reject(
+            new CliError(
+              `Permission denied (403): ${details}. You may not have permission to access this resource.`,
+              1,
+            ),
+          );
+        }
+
         if (status === 404) {
           return Promise.reject(
             new CliError('Not found: the requested resource does not exist.', 1),

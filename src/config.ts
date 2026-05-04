@@ -52,7 +52,9 @@ export function loadConfig(configFilePath?: string): ApiConfig {
   const baseUrl = rawUrl.replace(/\/+$/, '');
 
   // Resolve token: env var > config file
-  const token = process.env.TANDOOR_API_TOKEN ?? readConfigFile(configFilePath)?.token;
+  const configData = readConfigFile(configFilePath);
+  const token = process.env.TANDOOR_API_TOKEN ?? configData?.token;
+  
   if (token) {
     return {
       baseUrl,
