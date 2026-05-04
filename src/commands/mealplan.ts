@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { listMealPlans, createMealPlan, deleteMealPlan } from '../api/mealplan';
+import { addMealPlanIngredientsToShopping } from '../api/shopping';
 import { formatMealPlan, printJson, printSuccess, printError } from '../output/formatter';
 import { isValidDate } from '../utils';
 
@@ -12,10 +13,25 @@ export function registerMealplanCommand(program: Command): void {
   mealplan
     .command('list')
     .description('List all meal plan entries')
+    .option('--startdate <YYYY-MM-DD>', 'Filter entries from this date (inclusive)')
+    .option('--enddate <YYYY-MM-DD>', 'Filter entries up to this date (inclusive)')
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
       try {
-        const entries = await listMealPlans();
+        if (opts.startdate && !isValidDate(opts.startdate)) {
+          printError(`Invalid --startdate format "${opts.startdate}". Expected YYYY-MM-DD.`);
+          process.exit(1);
+        }
+        if (opts.enddate && !isValidDate(opts.enddate)) {
+          printError(`Invalid --enddate format "${opts.enddate}". Expected YYYY-MM-DD.`);
+          process.exit(1);
+        }
+
+        const entries = await listMealPlans({
+          startdate: opts.startdate,
+          enddate: opts.enddate,
+        });
+
         if (opts.json) {
           printJson(entries);
         } else if (entries.length === 0) {
@@ -32,29 +48,80 @@ export function registerMealplanCommand(program: Command): void {
   // mealplan add
   mealplan
     .command('add')
-    .description('Add a meal plan entry')
-    .requiredOption('--recipe <id>', 'Recipe ID')
-    .requiredOption('--date <YYYY-MM-DD>', 'Date in YYYY-MM-DD format')
-    .requiredOption('--meal-type <id>', 'Meal type ID')
+    .description('Add a meal plan entry, or add all meal plan ingredients to the shopping list')
+    .option('--recipe <id>', 'Recipe ID (required without --shopping)')
+    .option('--date <YYYY-MM-DD>', 'Date in YYYY-MM-DD format (required without --shopping)')
+    .option('--meal-type <id>', 'Meal type ID (required without --shopping)')
+    .option('--shopping', 'Add all ingredients from meal plan entries in the given date range to the shopping list')
+    .option('--startdate <YYYY-MM-DD>', 'Start date for meal plan range (required with --shopping)')
+    .option('--enddate <YYYY-MM-DD>', 'End date for meal plan range (required with --shopping)')
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
       try {
-        if (!isValidDate(opts.date)) {
-          printError(`Invalid date format "${opts.date}". Expected YYYY-MM-DD.`);
-          process.exit(1);
-        }
+        if (opts.shopping) {
+          // Shopping mode: add all ingredients from the date range to the shopping list
+          if (!opts.startdate || !opts.enddate) {
+            printError('--startdate and --enddate are required when using --shopping.');
+            process.exit(1);
+          }
+          if (!isValidDate(opts.startdate)) {
+            printError(`Invalid --startdate format "${opts.startdate}". Expected YYYY-MM-DD.`);
+            process.exit(1);
+          }
+          if (!isValidDate(opts.enddate)) {
+            printError(`Invalid --enddate format "${opts.enddate}". Expected YYYY-MM-DD.`);
+            process.exit(1);
+          }
 
-        const entry = await createMealPlan(
-          parseInt(opts.recipe, 10),
-          opts.date,
-          parseInt(opts.mealType, 10),
-        );
+          const { added, skipped } = await addMealPlanIngredientsToShopping(opts.startdate, opts.enddate);
 
-        if (opts.json) {
-          printJson(entry);
+          if (opts.json) {
+            printJson({ added: added.map((a) => a.entry), skipped });
+          } else if (added.length === 0 && skipped.length === 0) {
+            console.log('No meal plan entries found in the given date range.');
+          } else {
+            if (added.length > 0) {
+              printSuccess(`Added ${added.length} ingredient(s) to the shopping list.`);
+              added.forEach((a) => {
+                const parts = [a.amount !== 0 ? String(a.amount) : '', a.unit, a.food]
+                  .filter(Boolean)
+                  .join(' ');
+                console.log(`  • ${parts}`);
+              });
+            } else {
+              console.log('No ingredients added (all were skipped).');
+            }
+            if (skipped.length > 0) {
+              console.log(`\nSkipped ${skipped.length} ingredient(s):`);
+              skipped.forEach((s) => {
+                const reason = s.reason === 'food_onhand' ? 'on hand' : 'ignore shopping';
+                console.log(`  ⊘ ${s.food}  (${reason})`);
+              });
+            }
+          }
         } else {
-          printSuccess(`Added meal plan entry #${entry.id}.`);
-          formatMealPlan(entry);
+          // Standard mode: create a meal plan entry
+          if (!opts.recipe || !opts.date || !opts.mealType) {
+            printError('--recipe, --date, and --meal-type are required (or use --shopping with --startdate and --enddate).');
+            process.exit(1);
+          }
+          if (!isValidDate(opts.date)) {
+            printError(`Invalid date format "${opts.date}". Expected YYYY-MM-DD.`);
+            process.exit(1);
+          }
+
+          const entry = await createMealPlan(
+            parseInt(opts.recipe, 10),
+            opts.date,
+            parseInt(opts.mealType, 10),
+          );
+
+          if (opts.json) {
+            printJson(entry);
+          } else {
+            printSuccess(`Added meal plan entry #${entry.id}.`);
+            formatMealPlan(entry);
+          }
         }
       } catch (err: unknown) {
         printError(err instanceof Error ? err.message : String(err));

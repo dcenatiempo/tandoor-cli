@@ -1,4 +1,4 @@
-import { Recipe, MealPlan, ShoppingListEntry } from '../api/types';
+import { Recipe, MealPlan, ShoppingListEntry, Food } from '../api/types';
 
 // Auto-disable colors when stdout is not a TTY (7.7)
 const isTTY = process.stdout.isTTY === true;
@@ -94,12 +94,27 @@ export function formatShoppingList(entries: ShoppingListEntry[]): void {
   });
 }
 
-// 7.5 — pretty-printed JSON (no color codes in output)
+// 7.5 — food list
+export function formatFoodList(foods: Food[]): void {
+  if (foods.length === 0) {
+    console.log(dim('No foods found.'));
+    return;
+  }
+
+  foods.forEach(f => {
+    const flags: string[] = [];
+    if (f.ignore_shopping) flags.push(dim('ignore-shopping'));
+    if (f.food_onhand)     flags.push(dim('on-hand'));
+    const suffix = flags.length > 0 ? '  ' + flags.join('  ') : '';
+    console.log(`${dim(`[${f.id}]`)} ${cyan(f.name)}${suffix}`);
+  });
+}
+
+// 7.6 — pretty-printed JSON (no color codes in output)
 export function printJson(data: unknown): void {
   console.log(JSON.stringify(data, null, 2));
 }
-
-// 7.6 — success (stdout, green) and error (stderr, red)
+// 7.7 — success (stdout, green) and error (stderr, red)
 export function printSuccess(msg: string): void {
   console.log(green(msg));
 }

@@ -3,6 +3,8 @@
 export interface Food {
   id: number;
   name: string;
+  ignore_shopping?: boolean;
+  food_onhand?: boolean;
 }
 
 export interface Unit {

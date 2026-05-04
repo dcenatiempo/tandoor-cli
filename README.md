@@ -262,12 +262,18 @@ tandoor import https://www.bbcgoodfood.com/recipes/easy-chocolate-cake --dry-run
 
 #### `tandoor mealplan list`
 
-List all meal plan entries.
+List all meal plan entries. Optionally filter by date range.
 
 ```bash
 tandoor mealplan list
 tandoor mealplan list --json
+tandoor mealplan list --startdate 2026-06-01
+tandoor mealplan list --enddate 2026-06-08
+tandoor mealplan list --startdate 2026-06-01 --enddate 2026-06-08
 ```
+
+- `--startdate <YYYY-MM-DD>` — only return entries on or after this date
+- `--enddate <YYYY-MM-DD>` — only return entries on or before this date
 
 #### `tandoor mealplan add`
 
@@ -309,12 +315,14 @@ tandoor shopping add --food flour --amount 500 --unit g
 tandoor shopping add --food milk --amount 1 --unit liter
 ```
 
-#### `tandoor shopping check <id>`
+#### `tandoor shopping check [id]`
 
-Mark a shopping list entry as checked.
+Mark a shopping list entry as checked, or check all entries at once with `--all`.
 
 ```bash
-tandoor shopping check 3
+tandoor shopping check 3        # check a single entry by ID
+tandoor shopping check --all    # check every unchecked entry
+tandoor shopping check --all --json
 ```
 
 #### `tandoor shopping clear`
@@ -325,6 +333,70 @@ Delete all checked entries. Prompts for confirmation unless `--force` is passed.
 tandoor shopping clear
 tandoor shopping clear --force
 ```
+
+---
+
+### Food Ingredients
+
+#### `tandoor food list`
+
+List food ingredients, with optional search, limit, and ignore filter.
+
+```bash
+tandoor food list                           # default: 20 items
+tandoor food list --limit 10                # return up to 10 items
+tandoor food list --search butter           # filter by search term
+tandoor food list --limit 10 --search butter
+tandoor food list --ignored                 # only foods with ignore_shopping set
+tandoor food list --ignored --search butter # combine filters
+tandoor food list --json                    # output raw JSON
+```
+
+- `--limit <n>` — maximum number of results (default 20)
+- `--search <term>` — filter results by keyword
+- `--ignored` — only show foods that are on the ignore-shopping list
+- `--json` — output raw JSON
+
+Each row shows the food ID, name, and any active flags (`ignore-shopping`, `on-hand`).
+
+#### `tandoor food edit <id-or-name>`
+
+Edit a food ingredient's properties. Accepts either a numeric ID or an exact name (case-insensitive).
+
+```bash
+tandoor food edit butter --ignore-shopping true
+tandoor food edit 42 --ignore-shopping false
+tandoor food edit "olive oil" --ignore-shopping true --json
+```
+
+- `--ignore-shopping <true|false>` — set whether this food is excluded from shopping lists
+- `--json` — output the updated food as raw JSON
+
+#### `tandoor food ignore <id-or-name>`
+
+Set or clear the `ignore_shopping` flag. Accepts either a numeric ID or an exact name (case-insensitive).
+
+```bash
+tandoor food ignore butter           # set ignore_shopping = true
+tandoor food ignore 42               # same, by ID
+tandoor food ignore butter --unset   # clear the flag
+```
+
+- `--unset` — clear the flag (re-enable shopping for this food)
+- `--json` — output the updated food as raw JSON
+
+#### `tandoor food onhand <id-or-name>`
+
+Mark a food as on hand (in your pantry) or clear that flag. Accepts either a numeric ID or an exact name (case-insensitive).
+
+```bash
+tandoor food onhand eggs
+tandoor food onhand 17
+tandoor food onhand eggs --unset
+```
+
+- `--unset` — clear the on-hand flag
+- `--json` — output the updated food as raw JSON
 
 ---
 
