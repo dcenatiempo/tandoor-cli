@@ -12,6 +12,8 @@ describe('loadConfig()', () => {
   const originalEnv = process.env;
   let exitSpy: ReturnType<typeof vi.spyOn>;
   let stderrSpy: ReturnType<typeof vi.spyOn>;
+  let tmpDir: string;
+  let nonExistentConfigPath: string;
 
   beforeEach(() => {
     process.env = { ...originalEnv };
@@ -19,48 +21,55 @@ describe('loadConfig()', () => {
       throw new Error(`process.exit(${_code})`);
     });
     stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    // Create a temp directory and use a non-existent config file path
+    // This prevents loadConfig from reading the user's actual config file
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tandoor-test-'));
+    nonExistentConfigPath = path.join(tmpDir, 'nonexistent-config.json');
   });
 
   afterEach(() => {
     process.env = originalEnv;
     vi.restoreAllMocks();
+    if (tmpDir) {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 
   it('exits with code 1 when TANDOOR_URL is missing', () => {
     delete process.env.TANDOOR_URL;
     delete process.env.TANDOOR_API_TOKEN;
-    expect(() => loadConfig()).toThrow('process.exit(1)');
+    expect(() => loadConfig(nonExistentConfigPath)).toThrow('process.exit(1)');
   });
 
   it('prints a descriptive message when TANDOOR_URL is missing', () => {
     delete process.env.TANDOOR_URL;
     delete process.env.TANDOOR_API_TOKEN;
-    try { loadConfig(); } catch { /* expected */ }
+    try { loadConfig(nonExistentConfigPath); } catch { /* expected */ }
     expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('TANDOOR_URL'));
   });
 
   it('strips a single trailing slash from TANDOOR_URL', () => {
     process.env.TANDOOR_URL = 'http://localhost:8050/';
     process.env.TANDOOR_API_TOKEN = 'tok';
-    expect(loadConfig().baseUrl).toBe('http://localhost:8050');
+    expect(loadConfig(nonExistentConfigPath).baseUrl).toBe('http://localhost:8050');
   });
 
   it('strips multiple trailing slashes from TANDOOR_URL', () => {
     process.env.TANDOOR_URL = 'http://localhost:8050///';
     process.env.TANDOOR_API_TOKEN = 'tok';
-    expect(loadConfig().baseUrl).toBe('http://localhost:8050');
+    expect(loadConfig(nonExistentConfigPath).baseUrl).toBe('http://localhost:8050');
   });
 
   it('leaves a URL without trailing slash unchanged', () => {
     process.env.TANDOOR_URL = 'http://localhost:8050';
     process.env.TANDOOR_API_TOKEN = 'tok';
-    expect(loadConfig().baseUrl).toBe('http://localhost:8050');
+    expect(loadConfig(nonExistentConfigPath).baseUrl).toBe('http://localhost:8050');
   });
 
   it('uses Bearer token when TANDOOR_API_TOKEN is set', () => {
     process.env.TANDOOR_URL = 'http://localhost:8050';
     process.env.TANDOOR_API_TOKEN = 'mytoken123';
-    const cfg = loadConfig();
+    const cfg = loadConfig(nonExistentConfigPath);
     expect(cfg.authHeader).toBe('Bearer mytoken123');
     expect(cfg.authType).toBe('token');
   });
@@ -70,7 +79,7 @@ describe('loadConfig()', () => {
     delete process.env.TANDOOR_API_TOKEN;
     process.env.TANDOOR_USERNAME = 'alice';
     process.env.TANDOOR_PASSWORD = 'secret';
-    const cfg = loadConfig();
+    const cfg = loadConfig(nonExistentConfigPath);
     const expected = 'Basic ' + Buffer.from('alice:secret').toString('base64');
     expect(cfg.authHeader).toBe(expected);
     expect(cfg.authType).toBe('basic');
@@ -81,7 +90,7 @@ describe('loadConfig()', () => {
     process.env.TANDOOR_API_TOKEN = 'preferme';
     process.env.TANDOOR_USERNAME = 'alice';
     process.env.TANDOOR_PASSWORD = 'secret';
-    const cfg = loadConfig();
+    const cfg = loadConfig(nonExistentConfigPath);
     expect(cfg.authHeader).toBe('Bearer preferme');
     expect(cfg.authType).toBe('token');
   });
@@ -91,7 +100,7 @@ describe('loadConfig()', () => {
     delete process.env.TANDOOR_API_TOKEN;
     delete process.env.TANDOOR_USERNAME;
     delete process.env.TANDOOR_PASSWORD;
-    expect(() => loadConfig()).toThrow('process.exit(1)');
+    expect(() => loadConfig(nonExistentConfigPath)).toThrow('process.exit(1)');
   });
 
   it('prints instructions to set TANDOOR_API_TOKEN when no credentials are present', () => {
@@ -99,7 +108,7 @@ describe('loadConfig()', () => {
     delete process.env.TANDOOR_API_TOKEN;
     delete process.env.TANDOOR_USERNAME;
     delete process.env.TANDOOR_PASSWORD;
-    try { loadConfig(); } catch { /* expected */ }
+    try { loadConfig(nonExistentConfigPath); } catch { /* expected */ }
     expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('TANDOOR_API_TOKEN'));
   });
 });
