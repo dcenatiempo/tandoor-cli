@@ -46,7 +46,8 @@ If `tandoor -V` produces no valid version, see the setup instructions in `refere
 - This skill uses the `tandoor-cli` npm package
 - Verify the package source before first use: https://www.npmjs.com/package/tandoor-cli
 - Review the package repository: https://github.com/dcenatiempo/tandoor-cli
-- Consider pinning to a specific version to avoid unexpected updates
+- **Recommended:** Pin to the specific version matching this skill (see version in metadata above) to avoid unexpected updates
+- Install pinned version: `npm install -g tandoor-cli@<version>` (replace `<version>` with the skill version)
 
 ### Invocation
 
@@ -225,8 +226,9 @@ tandoor shopping check --all
 **Before first use:**
 1. Verify the npm package: https://www.npmjs.com/package/tandoor-cli
 2. Review the source code: https://github.com/dcenatiempo/tandoor-cli
-3. Generate a token with minimal required permissions (see SECURITY.md)
-4. Consider using a test Tandoor instance first
+3. **Recommended:** Install the pinned version matching this skill: `npm install -g tandoor-cli@<version>` (see version in metadata above)
+4. Generate a token with minimal required permissions (see SECURITY.md)
+5. Consider using a test Tandoor instance first
 
 ### Reference
 
