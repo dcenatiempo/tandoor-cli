@@ -15,7 +15,14 @@ This skill provides AI agents with the ability to interact with a Tandoor Recipe
 
 ### Prerequisites
 
-The `tandoor-cli` tool must be installed and configured. If `tandoor -V` produces no valid version, see the setup instructions in `references/SETUP.md`.
+The `tandoor-cli` tool must be installed and configured.
+
+**Version Compatibility:** This skill documentation corresponds to the version specified in the metadata above. Before using this skill:
+1. Verify your installed CLI version: `tandoor -V`
+2. Ensure the installed version matches the skill version to avoid unexpected behavior or missing commands
+3. If versions don't match, reinstall the CLI tool following the setup instructions in `references/SETUP.md`
+
+If `tandoor -V` produces no valid version, see the setup instructions in `references/SETUP.md`.
 
 ### Security & Permission Model
 
