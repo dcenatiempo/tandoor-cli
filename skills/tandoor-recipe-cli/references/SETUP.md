@@ -94,48 +94,95 @@ Use an OAuth2 access token with Bearer authentication.
 
 **Important:** The regular DRF token shown in Tandoor's Settings → API does **not** work for this CLI. You need an OAuth2 access token.
 
+**⚠️ Security Note:** Use the shortest token lifetime appropriate for your use case. For AI agent use, consider tokens that expire in days or weeks, not years.
+
 #### Generating an OAuth2 token
 
-If you're running Tandoor in Docker, you can generate a long-lived OAuth2 token using the Django shell:
+If you're running Tandoor in Docker, you can generate an OAuth2 token using the Django shell. Choose the appropriate example based on your needs:
+
+##### Read-Only Token (Safest)
+
+For querying recipes only:
 
 ```bash
-# Access the Django shell in your Tandoor container
-docker exec -it <your-container-name> /opt/recipes/venv/bin/python manage.py shell
-
-# In the Django shell, run:
-from django.contrib.auth import get_user_model
+docker exec <your-container-name> /opt/recipes/venv/bin/python /opt/recipes/manage.py shell -c "
 from oauth2_provider.models import Application, AccessToken
-from datetime import timedelta
+from django.contrib.auth.models import User
 from django.utils import timezone
+from datetime import timedelta
+import secrets
 
-User = get_user_model()
+user = User.objects.get(username='YOUR_USERNAME')
 
-# Get your user
-user = User.objects.get(username='your_username')
-
-# Create or get an OAuth2 application
-app, created = Application.objects.get_or_create(
+app, _ = Application.objects.get_or_create(
     name='tandoor-cli',
-    defaults={
-        'client_type': Application.CLIENT_CONFIDENTIAL,
-        'authorization_grant_type': Application.GRANT_PASSWORD,
-        'user': user
-    }
+    defaults=dict(
+        user=user,
+        client_type=Application.CLIENT_CONFIDENTIAL,
+        authorization_grant_type=Application.GRANT_PASSWORD,
+    )
 )
 
-# Create a long-lived access token (1 year)
 token = AccessToken.objects.create(
     user=user,
     application=app,
-    token='your_custom_token_string_here',  # Or leave blank for auto-generation
-    expires=timezone.now() + timedelta(days=365),
-    scope='read write'
+    token=secrets.token_hex(20),
+    expires=timezone.now() + timedelta(days=7),  # 7 days
+    scope='read',  # Read-only
 )
-
-print(f"Your access token: {token.token}")
+print('ACCESS TOKEN:', token.token)
+"
 ```
 
-Copy the token and use it as your `TANDOOR_API_TOKEN`.
+##### Read-Write Token (Standard)
+
+For recipe management (add, edit, delete recipes):
+
+```bash
+docker exec <your-container-name> /opt/recipes/venv/bin/python /opt/recipes/manage.py shell -c "
+from oauth2_provider.models import Application, AccessToken
+from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
+import secrets
+
+user = User.objects.get(username='YOUR_USERNAME')
+
+app, _ = Application.objects.get_or_create(
+    name='tandoor-cli',
+    defaults=dict(
+        user=user,
+        client_type=Application.CLIENT_CONFIDENTIAL,
+        authorization_grant_type=Application.GRANT_PASSWORD,
+    )
+)
+
+token = AccessToken.objects.create(
+    user=user,
+    application=app,
+    token=secrets.token_hex(20),
+    expires=timezone.now() + timedelta(days=30),  # 30 days
+    scope='read write',
+)
+print('ACCESS TOKEN:', token.token)
+"
+```
+
+Replace `<your-container-name>` with the name of your running Tandoor Docker container and `YOUR_USERNAME` with your Tandoor username. Copy the printed token into `TANDOOR_API_TOKEN`.
+
+**Token Lifetime Recommendations:**
+- **AI agents / automation:** 7-30 days
+- **Personal CLI use:** 30-90 days
+- **Testing / development:** 1-7 days
+- **Administrative tasks:** 1 day (revoke after use)
+
+**Token Security Best Practices:**
+- Store tokens securely (environment variables, secret managers)
+- Never commit tokens to version control
+- Revoke tokens immediately if compromised
+- Rotate tokens regularly
+- Use read-only tokens when possible
+- See `SECURITY.md` for comprehensive security guidance
 
 ### Username/password fallback
 

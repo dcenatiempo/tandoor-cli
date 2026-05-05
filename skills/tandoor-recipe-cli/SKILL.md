@@ -17,6 +17,30 @@ This skill provides AI agents with the ability to interact with a Tandoor Recipe
 
 The `tandoor-cli` tool must be installed and configured. If `tandoor -V` produces no valid version, see the setup instructions in `references/SETUP.md`.
 
+### Security & Permission Model
+
+**⚠️ IMPORTANT: This skill provides mutation authority over your Tandoor instance.**
+
+- **Read operations** (list, search, get, random) are safe and require no confirmation
+- **Write operations** (add, update, import) modify data but are typically reversible
+- **Destructive operations** (delete, clear, household management) require explicit user approval before execution
+- **Bulk operations** (shopping check --all, clear) affect multiple items and require confirmation
+- **Administrative operations** (household management, user assignment, invite creation) require privileged credentials and explicit approval
+
+**Token Security:**
+- Use the **least-privileged token** possible for your use case
+- Prefer read-only tokens if you only need to query recipes
+- Avoid using space-owner or admin tokens unless household management is required
+- Consider short-lived tokens (days/weeks) instead of long-lived tokens (years)
+- Store tokens securely and rotate them regularly
+- Revoke tokens immediately if compromised or no longer needed
+
+**Supply Chain:**
+- This skill uses the `tandoor-cli` npm package
+- Verify the package source before first use: https://www.npmjs.com/package/tandoor-cli
+- Review the package repository: https://github.com/dcenatiempo/tandoor-cli
+- Consider pinning to a specific version to avoid unexpected updates
+
 ### Invocation
 
 ```bash
@@ -25,64 +49,104 @@ tandoor <command> [options]
 
 ### Commands
 
-#### Recipes
+#### Read Operations (Safe)
+
+**Recipes:**
 | Command | Description |
 |---|---|
 | `list [--limit N]` | List recipes (default 20, max 100) |
 | `search <query>` | Search recipes by keyword |
 | `get <id>` | Get full recipe details |
 | `random` | Get a random recipe |
-| `add [--json file]` | Create a recipe (interactive or from JSON) |
-| `update <id> --json file` | Patch an existing recipe |
-| `delete <id> [--force]` | Delete a recipe |
-| `import <url> [--dry-run]` | Import a recipe from a URL |
-| `image <recipeId> <imagePath>` | Upload an image to a recipe (supports JPEG/PNG) |
 
-#### Meal Plans
+**Meal Plans:**
 | Command | Description |
 |---|---|
 | `mealplan list [--startdate DATE] [--enddate DATE]` | List meal plan entries (optionally filtered by date range) |
-| `mealplan add --recipe ID --date YYYY-MM-DD --meal-type N` | Add a meal plan entry |
-| `mealplan delete <id>` | Delete a meal plan entry |
 
-#### Shopping List
+**Shopping List:**
 | Command | Description |
 |---|---|
 | `shopping list` | List shopping list entries |
-| `shopping add --food NAME --amount N --unit UNIT` | Add a shopping list item |
-| `shopping check [id]` | Mark a shopping item as checked (or use `--all` for all items) |
-| `shopping check --all` | Mark all shopping items as checked |
-| `shopping clear [--force]` | Clear all checked items |
 
-#### Households & Users
+**Food Ingredients:**
+| Command | Description |
+|---|---|
+| `food list [--limit N] [--search TERM] [--ignored]` | List food ingredients |
+
+**Households & Users:**
+| Command | Description |
+|---|---|
+| `household list` | List all households |
+| `household get <id>` | Get household details by ID |
+| `household users list` | List all users in the space |
+| `household users memberships` | List user-space memberships |
+| `household invite list` | List all invite links |
+
+#### Write Operations (Require Confirmation)
+
+| Command | Description | Approval Required |
+|---|---|---|
+| `add [--json file]` | Create a recipe | ✓ Before execution |
+| `update <id> --json file` | Patch an existing recipe | ✓ Before execution |
+| `import <url> [--dry-run]` | Import a recipe from a URL | ✓ Before execution |
+| `image <recipeId> <imagePath>` | Upload an image to a recipe | ✓ Before execution |
+| `mealplan add --recipe ID --date YYYY-MM-DD --meal-type N` | Add a meal plan entry | ✓ Before execution |
+| `shopping add --food NAME --amount N --unit UNIT` | Add a shopping list item | ✓ Before execution |
+| `shopping check <id>` | Mark a shopping item as checked | ✓ Before execution |
+| `food edit <id\|name> --ignore-shopping <true\|false>` | Edit a food's ignore_shopping flag | ✓ Before execution |
+| `food ignore <id\|name> [--unset]` | Set or clear ignore_shopping by ID or name | ✓ Before execution |
+| `food onhand <id\|name> [--unset]` | Set or clear the on-hand flag by ID or name | ✓ Before execution |
+
+#### Destructive Operations (Require Explicit Confirmation)
+
+| Command | Description | Approval Required |
+|---|---|---|
+| `delete <id> [--force]` | Delete a recipe | ✓✓ Explicit confirmation required |
+| `mealplan delete <id>` | Delete a meal plan entry | ✓✓ Explicit confirmation required |
+| `shopping clear [--force]` | Clear all checked items | ✓✓ Explicit confirmation (bulk operation) |
+| `shopping check --all` | Mark all items as checked | ✓✓ Explicit confirmation (bulk operation) |
+
+#### Administrative Operations (Require Privileged Token + Explicit Confirmation)
 
 **Important:** Tandoor uses **households** to organize users and recipes. Users are added to households via **invite links** — you cannot create users directly via the API.
 
 > **Permission Requirements:** Household management commands require special permissions in Tandoor. Most operations need admin/staff privileges. The `household invite create` command specifically requires **space owner** authentication — even superusers or staff members will receive a 403 Permission Denied error if they're not the space owner. If you encounter permission errors, you must use the space owner's API token or contact your Tandoor administrator.
 
-| Command | Description |
-|---|---|
-| `household list` | List all households |
-| `household get <id>` | Get household details by ID |
-| `household add <name>` | Create a new household (requires admin) |
-| `household edit <id> --name <name>` | Rename a household (requires admin) |
-| `household delete <id> [--force]` | Delete a household (requires admin) |
-| `household users list` | List all users in the space |
-| `household users memberships` | List user-space memberships |
-| `household users assign <user-space-id> <household-id>` | Assign a user to a household (requires admin) |
-| `household invite list` | List all invite links (requires admin) |
-| `household invite create <household-id> [--email EMAIL] [--expires DATE] [--group-id ID]` | Create an invite link (requires space owner token) |
-| `household invite delete <id> [--force]` | Delete an invite link (requires admin) |
-
-#### Food Ingredients
-| Command | Description |
-|---|---|
-| `food list [--limit N] [--search TERM] [--ignored]` | List food ingredients |
-| `food edit <id\|name> --ignore-shopping <true\|false>` | Edit a food's ignore_shopping flag |
-| `food ignore <id\|name> [--unset]` | Set or clear ignore_shopping by ID or name |
-| `food onhand <id\|name> [--unset]` | Set or clear the on-hand flag by ID or name |
+| Command | Description | Approval Required |
+|---|---|---|
+| `household add <name>` | Create a new household | ✓✓ Admin token + explicit confirmation |
+| `household edit <id> --name <name>` | Rename a household | ✓✓ Admin token + explicit confirmation |
+| `household delete <id> [--force]` | Delete a household | ✓✓ Admin token + explicit confirmation |
+| `household users assign <user-space-id> <household-id>` | Assign user to household | ✓✓ Admin token + explicit confirmation |
+| `household invite create <household-id> [--email EMAIL] [--expires DATE] [--group-id ID]` | Create invite link | ✓✓ Space-owner token + explicit confirmation |
+| `household invite delete <id> [--force]` | Delete invite link | ✓✓ Admin token + explicit confirmation |
 
 All read commands accept `--json` for machine-readable output suitable for agent pipelines.
+
+### Agent Behavior Rules
+
+**Before executing any command, the agent MUST:**
+
+1. **For read operations:** Proceed without confirmation
+2. **For write operations:** Describe the action and wait for user approval
+3. **For destructive operations:** 
+   - Clearly explain what will be deleted/modified
+   - Warn that the action cannot be easily reversed
+   - Wait for explicit user confirmation (e.g., "yes, delete recipe 42")
+4. **For bulk operations:**
+   - State how many items will be affected
+   - Wait for explicit confirmation
+5. **For administrative operations:**
+   - Verify the user has provided an admin/space-owner token
+   - Explain the scope of the change (e.g., "this will move user X to household Y")
+   - Wait for explicit confirmation
+
+**The agent MUST NOT:**
+- Execute delete, force, bulk, household, invite, or user-assignment commands without explicit user approval
+- Assume the user wants destructive actions even if implied by context
+- Use `--force` flags without explicit user instruction
+- Log or display the `TANDOOR_API_TOKEN` value in any output
 
 ### Configuration
 
@@ -108,26 +172,56 @@ tandoor list --limit 5 --json
 
 **Write example — create a recipe from a JSON file:**
 ```bash
+# Agent should first ask: "I will create a new recipe from recipe.json. Proceed?"
+# Only after user confirms:
 tandoor add --json recipe.json
+```
+
+**Destructive example — delete a recipe:**
+```bash
+# Agent should first ask: "This will permanently delete recipe 42. This cannot be undone. Confirm deletion?"
+# Only after explicit user confirmation:
+tandoor delete 42 --force
 ```
 
 **Image example — upload an image to a recipe:**
 ```bash
+# Agent should first ask: "I will upload my-recipe-photo.jpg to recipe 42. Proceed?"
+# Only after user confirms:
 tandoor image 42 ./my-recipe-photo.jpg
 ```
 
 **Household example — create a household and generate an invite link:**
 ```bash
+# Agent should first ask: "I will create a new household named 'My Family'. This requires admin privileges. Proceed?"
+# Only after user confirms:
 tandoor household add "My Family"
+
+# Agent should first ask: "I will create an invite link for household 1. This requires space-owner token. Proceed?"
+# Only after user confirms:
 tandoor household invite create 1 --email user@example.com --expires 2026-12-31
 ```
 
 **Shopping list example — add items and check them off:**
 ```bash
+# Agent should first ask: "I will add flour (500g) to the shopping list. Proceed?"
+# Only after user confirms:
 tandoor shopping add --food flour --amount 500 --unit g
+
+# Agent should first ask: "This will mark ALL shopping items as checked. Confirm?"
+# Only after explicit confirmation:
 tandoor shopping check --all
 ```
 
+### Installation & Setup
+
+**Before first use:**
+1. Verify the npm package: https://www.npmjs.com/package/tandoor-cli
+2. Review the source code: https://github.com/dcenatiempo/tandoor-cli
+3. Generate a token with minimal required permissions (see SECURITY.md)
+4. Consider using a test Tandoor instance first
+
 ### Reference
 
-See `references/SETUP.md` for detailed setup documentation including authentication configuration.
+- See `references/SETUP.md` for detailed setup documentation including authentication configuration
+- See `SECURITY.md` for comprehensive security guidelines and token management best practices
