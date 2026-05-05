@@ -252,6 +252,19 @@ tandoor import https://www.bbcgoodfood.com/recipes/easy-chocolate-cake --dry-run
 - `--json` — outputs the created (or previewed) recipe as raw JSON
 - If the scraper detects a possible duplicate already in your collection, a warning is printed to stderr but the import still proceeds.
 
+#### `tandoor image <recipeId> <imagePath>`
+
+Upload an image to a recipe.
+
+```bash
+tandoor image 42 ./my-recipe-photo.jpg
+tandoor image 42 ~/Pictures/food.png
+```
+
+- Supports JPEG (`.jpg`, `.jpeg`) and PNG (`.png`) formats
+- The image file must exist and be readable
+- On success, prints the uploaded image path
+
 ---
 
 ### Meal Plans

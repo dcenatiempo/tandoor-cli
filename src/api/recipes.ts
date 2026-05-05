@@ -62,3 +62,17 @@ export async function setRecipeImageFromUrl(id: number, imageUrl: string): Promi
     headers: form.getHeaders(),
   });
 }
+
+export async function uploadRecipeImage(id: number, imagePath: string): Promise<{ image: string }> {
+  const fs = require('fs') as typeof import('fs');
+  const FormData = require('form-data') as typeof import('form-data');
+  
+  const form = new FormData();
+  form.append('image', fs.createReadStream(imagePath));
+  
+  const res = await apiClient.put<{ image: string }>(`/recipe/${id}/image/`, form, {
+    headers: form.getHeaders(),
+  });
+  
+  return res.data;
+}

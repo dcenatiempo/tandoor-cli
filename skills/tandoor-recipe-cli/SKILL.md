@@ -36,6 +36,7 @@ tandoor <command> [options]
 | `update <id> --json file` | Patch an existing recipe |
 | `delete <id> [--force]` | Delete a recipe |
 | `import <url> [--dry-run]` | Import a recipe from a URL |
+| `image <recipeId> <imagePath>` | Upload an image to a recipe (supports JPEG/PNG) |
 
 #### Meal Plans
 | Command | Description |
@@ -108,6 +109,11 @@ tandoor list --limit 5 --json
 **Write example — create a recipe from a JSON file:**
 ```bash
 tandoor add --json recipe.json
+```
+
+**Image example — upload an image to a recipe:**
+```bash
+tandoor image 42 ./my-recipe-photo.jpg
 ```
 
 **Household example — create a household and generate an invite link:**
