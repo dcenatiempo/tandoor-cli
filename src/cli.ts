@@ -15,6 +15,7 @@ import { registerConfigureCommand } from './commands/configure';
 import { registerFoodCommand } from './commands/food';
 import { registerHouseholdCommand } from './commands/household';
 import { registerImageCommand } from './commands/image';
+import { registerCooklogCommand } from './commands/cooklog';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pkg = require('../package.json') as { version: string };
@@ -41,6 +42,7 @@ registerConfigureCommand(program);
 registerFoodCommand(program);
 registerHouseholdCommand(program);
 registerImageCommand(program);
+registerCooklogCommand(program);
 
 process.on('unhandledRejection', (err) => {
   process.stderr.write((err instanceof Error ? err.message : String(err)) + '\n');

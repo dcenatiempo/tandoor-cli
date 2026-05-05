@@ -102,6 +102,15 @@ export interface InviteLink {
   created_at: string;
 }
 
+export interface CookLog {
+  id: number;
+  recipe: number;
+  servings: number;
+  rating: number | null;
+  created_at: string;  // ISO 8601
+  created_by: number;
+}
+
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;

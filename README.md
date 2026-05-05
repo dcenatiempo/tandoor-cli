@@ -466,6 +466,108 @@ tandoor household invite delete 1 --force
 
 ---
 
+### Cook Logs
+
+Cook logs allow you to track when you cook recipes, including servings made and optional ratings.
+
+#### `tandoor cooklog list`
+
+List cook log entries, sorted by most recent first. Optionally filter by recipe and date range.
+
+```bash
+tandoor cooklog list                    # default: 20 entries
+tandoor cooklog list --limit 50         # return up to 50 entries
+tandoor cooklog list --recipe 42        # only logs for recipe 42
+tandoor cooklog list --startdate 2026-04-01  # logs from April 1st onwards
+tandoor cooklog list --enddate 2026-04-30    # logs up to April 30th
+tandoor cooklog list --startdate 2026-04-01 --enddate 2026-04-30  # logs in April
+tandoor cooklog list --min-rating 4     # only 4 or 5 star ratings
+tandoor cooklog list --max-rating 2     # only 1 or 2 star ratings
+tandoor cooklog list --min-rating 4 --max-rating 4  # exactly 4 stars
+tandoor cooklog list --json             # output raw JSON
+```
+
+- `--recipe <id>` — filter by recipe ID
+- `--limit <n>` — maximum number of results (default 20)
+- `--startdate <YYYY-MM-DD>` — filter entries from this date (inclusive)
+- `--enddate <YYYY-MM-DD>` — filter entries up to this date (inclusive)
+- `--min-rating <1-5>` — minimum rating (inclusive, filters out unrated entries)
+- `--max-rating <1-5>` — maximum rating (inclusive, filters out unrated entries)
+- `--json` — output raw JSON
+
+Each row shows the cook log ID, recipe ID, servings, rating (if set), and date cooked. Results are always sorted from most recent to oldest.
+
+#### `tandoor cooklog ingredient <name>`
+
+Find cook logs by ingredient name. This searches through cook logs and checks each recipe to see if it contains the specified ingredient. Useful for answering questions like "When is the last time we had eggs?" or "How many times did we have chicken last month?"
+
+```bash
+tandoor cooklog ingredient eggs                    # find all logs with eggs
+tandoor cooklog ingredient "chicken breast"        # use quotes for multi-word ingredients
+tandoor cooklog ingredient eggs --limit 50         # search up to 50 recent logs
+tandoor cooklog ingredient eggs --startdate 2026-04-01 --enddate 2026-04-30  # eggs in April
+tandoor cooklog ingredient eggs --min-rating 4     # only highly-rated egg recipes (4-5 stars)
+tandoor cooklog ingredient eggs --max-rating 2     # only poorly-rated egg recipes (1-2 stars)
+tandoor cooklog ingredient eggs --json             # output raw JSON
+```
+
+- `<name>` — ingredient name to search for (case-insensitive, partial match)
+- `--limit <n>` — maximum number of cook logs to search (default 100)
+- `--startdate <YYYY-MM-DD>` — filter entries from this date (inclusive)
+- `--enddate <YYYY-MM-DD>` — filter entries up to this date (inclusive)
+- `--min-rating <1-5>` — minimum rating (inclusive, filters out unrated entries)
+- `--max-rating <1-5>` — maximum rating (inclusive, filters out unrated entries)
+- `--json` — output raw JSON
+
+The output shows:
+- Most recent occurrence with date and recipe name
+- Count of occurrences with applied filters (date range, rating)
+- Full list of matching cook logs with details
+
+**Note:** This command fetches recipe details for each cook log, so it may take a moment for large result sets.
+
+**Examples:**
+- "What are all my egg recipes with at least a 4 star rating?" → `tandoor cooklog ingredient eggs --min-rating 4`
+- "What were our least liked recipes from last month?" → `tandoor cooklog list --startdate 2026-04-01 --enddate 2026-04-30 --max-rating 2`
+
+#### `tandoor cooklog add`
+
+Add a cook log entry to track when you cooked a recipe.
+
+```bash
+tandoor cooklog add --recipe 42 --servings 4
+tandoor cooklog add --recipe 42 --servings 4 --rating 5
+tandoor cooklog add --recipe 42 --servings 4 --rating 5 --date "2026-04-27T04:00:00.000Z"
+```
+
+- `--recipe <id>` — recipe ID (required)
+- `--servings <number>` — number of servings made (required)
+- `--rating <1-5>` — optional rating from 1 to 5
+- `--date <ISO8601>` — optional date/time in ISO 8601 format (defaults to now)
+- `--json` — output the created log as raw JSON
+
+#### `tandoor cooklog update <id>`
+
+Update an existing cook log entry.
+
+```bash
+tandoor cooklog update 2 --recipe 42 --servings 6 --rating 4
+tandoor cooklog update 2 --recipe 42 --servings 6 --rating 4 --date "2026-04-27T04:00:00.000Z"
+```
+
+- All options are the same as `cooklog add`
+- The `<id>` parameter specifies which cook log entry to update
+
+#### `tandoor cooklog delete <id>`
+
+Delete a cook log entry by ID.
+
+```bash
+tandoor cooklog delete 2
+```
+
+---
+
 ### Food Ingredients
 
 #### `tandoor food list`

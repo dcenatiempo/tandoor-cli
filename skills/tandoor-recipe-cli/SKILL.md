@@ -82,6 +82,12 @@ tandoor <command> [options]
 |---|---|
 | `food list [--limit N] [--search TERM] [--ignored]` | List food ingredients |
 
+**Cook Logs:**
+| Command | Description |
+|---|---|
+| `cooklog list [--recipe ID] [--limit N] [--startdate YYYY-MM-DD] [--enddate YYYY-MM-DD] [--min-rating 1-5] [--max-rating 1-5]` | List cook log entries (sorted by most recent first) |
+| `cooklog ingredient <name> [--limit N] [--startdate YYYY-MM-DD] [--enddate YYYY-MM-DD] [--min-rating 1-5] [--max-rating 1-5]` | Find cook logs by ingredient name (e.g., "when did we last have eggs?") |
+
 **Households & Users:**
 | Command | Description |
 |---|---|
@@ -105,6 +111,8 @@ tandoor <command> [options]
 | `food edit <id\|name> --ignore-shopping <true\|false>` | Edit a food's ignore_shopping flag | ✓ Before execution |
 | `food ignore <id\|name> [--unset]` | Set or clear ignore_shopping by ID or name | ✓ Before execution |
 | `food onhand <id\|name> [--unset]` | Set or clear the on-hand flag by ID or name | ✓ Before execution |
+| `cooklog add --recipe ID --servings N [--rating 1-5] [--date ISO8601]` | Add a cook log entry | ✓ Before execution |
+| `cooklog update <id> --recipe ID --servings N [--rating 1-5] [--date ISO8601]` | Update a cook log entry | ✓ Before execution |
 
 #### Destructive Operations (Require Explicit Confirmation)
 
@@ -114,6 +122,7 @@ tandoor <command> [options]
 | `mealplan delete <id>` | Delete a meal plan entry | ✓✓ Explicit confirmation required |
 | `shopping clear [--force]` | Clear all checked items | ✓✓ Explicit confirmation (bulk operation) |
 | `shopping check --all` | Mark all items as checked | ✓✓ Explicit confirmation (bulk operation) |
+| `cooklog delete <id>` | Delete a cook log entry | ✓✓ Explicit confirmation required |
 
 #### Administrative Operations (Require Privileged Token + Explicit Confirmation)
 
@@ -219,6 +228,32 @@ tandoor shopping add --food flour --amount 500 --unit g
 # Agent should first ask: "This will mark ALL shopping items as checked. Confirm?"
 # Only after explicit confirmation:
 tandoor shopping check --all
+```
+
+**Cook log example — track when you cook a recipe:**
+```bash
+# Agent should first ask: "I will add a cook log entry for recipe 42 (4 servings, rating 5). Proceed?"
+# Only after user confirms:
+tandoor cooklog add --recipe 42 --servings 4 --rating 5
+
+# Read example — list cook logs for a specific recipe:
+tandoor cooklog list --recipe 42 --json
+
+# Read example — find when you last had eggs:
+tandoor cooklog ingredient eggs
+
+# Read example — count how many times you had chicken last month:
+tandoor cooklog ingredient chicken --startdate 2026-04-01 --enddate 2026-04-30
+
+# Read example — find highly-rated egg recipes (4-5 stars):
+tandoor cooklog ingredient eggs --min-rating 4
+
+# Read example — find poorly-rated recipes from last month (1-2 stars):
+tandoor cooklog list --startdate 2026-04-01 --enddate 2026-04-30 --max-rating 2
+
+# Agent should first ask: "This will delete cook log entry 2. Confirm?"
+# Only after explicit confirmation:
+tandoor cooklog delete 2
 ```
 
 ### Installation & Setup
