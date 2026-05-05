@@ -28,7 +28,8 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "version": "node scripts/update-skill-version.js && git add skills/tandoor-recipe-cli/SKILL.md"
   },
   "dependencies": {
     "axios": "^1.7.0",
