@@ -194,6 +194,90 @@ tandoor list --limit 5 --json
 tandoor add --json recipe.json
 ```
 
+### Recipe JSON Schema
+
+When creating recipes with `tandoor add --json <file>`, the JSON file must conform to the following structure:
+
+**TypeScript Definition:**
+```typescript
+interface RecipeCreatePayload {
+  name: string;                    // Required: Recipe name
+  description?: string;            // Optional: Recipe description
+  servings?: number;               // Optional: Number of servings
+  working_time?: number;           // Optional: Active cooking time in minutes
+  waiting_time?: number;           // Optional: Passive time (baking, marinating) in minutes
+  steps: StepCreatePayload[];      // Required: At least one step
+}
+
+interface StepCreatePayload {
+  instruction: string;             // Required: Step instructions
+  order: number;                   // Required: Step order (1, 2, 3, ...)
+  ingredients: IngredientCreatePayload[];  // Required: Can be empty array
+}
+
+interface IngredientCreatePayload {
+  food: { name: string };          // Required: Ingredient name
+  unit: { name: string } | null;   // Optional: Unit of measurement (null if not applicable)
+  amount: number;                  // Required: Quantity
+  note?: string;                   // Optional: Additional notes (e.g., "finely chopped")
+  order?: number | null;           // Optional: Order within the step
+}
+```
+
+**Example Recipe JSON:**
+```json
+{
+  "name": "Scrambled Eggs",
+  "description": "Quick and easy scrambled eggs",
+  "servings": 2,
+  "working_time": 5,
+  "steps": [
+    {
+      "instruction": "Crack eggs into a bowl, add milk and salt. Whisk until well combined.",
+      "order": 1,
+      "ingredients": [
+        {
+          "food": { "name": "eggs" },
+          "unit": { "name": "whole" },
+          "amount": 4
+        },
+        {
+          "food": { "name": "milk" },
+          "unit": { "name": "tbsp" },
+          "amount": 2
+        },
+        {
+          "food": { "name": "salt" },
+          "unit": null,
+          "amount": 1,
+          "note": "to taste"
+        }
+      ]
+    },
+    {
+      "instruction": "Heat butter in a pan over medium heat. Pour in egg mixture and stir gently until cooked to desired consistency.",
+      "order": 2,
+      "ingredients": [
+        {
+          "food": { "name": "butter" },
+          "unit": { "name": "tbsp" },
+          "amount": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Key Points for Agents:**
+- `name` and `steps` are required fields
+- Each step must have `instruction`, `order`, and `ingredients` (can be empty array)
+- Each ingredient must have `food.name` and `amount`
+- Use `null` for `unit` when no unit applies (e.g., "to taste", "pinch")
+- Common units: `g`, `kg`, `ml`, `l`, `cup`, `tbsp`, `tsp`, `whole`, `pinch`
+- Times are in minutes
+- Steps should be ordered sequentially (1, 2, 3, ...)
+
 **Destructive example — delete a recipe:**
 ```bash
 # Agent should first ask: "This will permanently delete recipe 42. This cannot be undone. Confirm deletion?"
