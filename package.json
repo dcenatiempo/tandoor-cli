@@ -1,6 +1,6 @@
 {
   "name": "tandoor-cli",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "CLI tool for Tandoor Recipe Manager",
   "license": "MIT",
   "repository": {
