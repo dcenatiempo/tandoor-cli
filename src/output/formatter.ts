@@ -71,9 +71,11 @@ export function formatRecipeList(recipes: Recipe[]): void {
 
 // 7.3 — single meal plan entry
 export function formatMealPlan(entry: MealPlan): void {
+  // Extract just the date part from the ISO datetime string
+  const date = entry.from_date.split('T')[0];
   console.log(
     `${dim(`[${entry.id}]`)} ${cyan(entry.recipe.name)}` +
-    `  ${dim(entry.date)}  ${dim(entry.meal_type.name)}`
+    `  ${dim(date)}  ${dim(entry.meal_type.name)}`
   );
 }
 

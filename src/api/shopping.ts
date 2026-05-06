@@ -14,11 +14,21 @@ export async function createShoppingEntry(
   amount: number,
   unit: string,
 ): Promise<ShoppingListEntry> {
-  const res = await apiClient.post<ShoppingListEntry>('/shopping-list-entry/', {
+  const payload: {
+    food: { name: string };
+    unit?: { name: string };
+    amount: number;
+  } = {
     food: { name: food },
-    unit: { name: unit },
     amount,
-  });
+  };
+  
+  // Only include unit if it's not empty
+  if (unit && unit.trim() !== '') {
+    payload.unit = { name: unit };
+  }
+  
+  const res = await apiClient.post<ShoppingListEntry>('/shopping-list-entry/', payload);
   return res.data;
 }
 

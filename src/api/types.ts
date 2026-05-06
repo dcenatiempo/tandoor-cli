@@ -47,8 +47,21 @@ export interface Recipe {
 export interface MealPlan {
   id: number;
   recipe: { id: number; name: string };
-  date: string;          // YYYY-MM-DD
+  from_date: string;     // ISO 8601 datetime
+  to_date: string;       // ISO 8601 datetime
   meal_type: { id: number; name: string };
+  servings: number;
+  note?: string;
+  title?: string;
+}
+
+export interface MealType {
+  id: number;
+  name: string;
+  order: number;
+  time: string;
+  color: string | null;
+  created_by: number;
 }
 
 export interface ShoppingListEntry {
