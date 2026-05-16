@@ -3,9 +3,10 @@
 ## Overview
 Added cook log functionality to the Tandoor CLI tool. Cook logs allow users to track when they cook recipes, including servings made and optional ratings.
 
-## API Endpoint
-- **Endpoint**: `POST /api/cook-log/`
-- **Methods**: Create and Update (both use POST with optional `id` field)
+## API Endpoints
+- **Create**: `POST /api/cook-log/`
+- **Update**: `PATCH /api/cook-log/<id>/`
+- **Delete**: `DELETE /api/cook-log/<id>/`
 
 ## Implementation
 
@@ -19,7 +20,7 @@ Added cook log functionality to the Tandoor CLI tool. Cook logs allow users to t
    - Results are sorted by created_at descending (most recent first)
    - Rating filters applied client-side
    - `createCookLog()` - Create a new cook log entry
-   - `updateCookLog()` - Update an existing cook log entry (includes `id` in payload)
+   - `updateCookLog()` - Update an existing cook log entry via PATCH
    - `deleteCookLog()` - Delete a cook log entry
    - `findCookLogsByIngredient()` - Find cook logs containing a specific ingredient
      - Fetches cook logs, then retrieves each recipe to check ingredients
@@ -120,15 +121,11 @@ tandoor cooklog delete 2
 }
 ```
 
-### Update
+### Update (PATCH `/api/cook-log/<id>/` — only include fields to change)
 ```json
 {
-  "id": 2,
-  "recipe": 1,
-  "servings": 8,
-  "rating": 4,
-  "created_at": "2026-04-27T04:00:00.000Z"
+  "rating": 4
 }
 ```
 
-Note: The `rating` and `created_at` fields are optional in both cases.
+Note: The `rating` and `created_at` fields are optional on create; on update, send only the fields you want to change.

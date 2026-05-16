@@ -102,6 +102,29 @@ export function sortCookLogsByDateDesc(logs: CookLog[]): CookLog[] {
   );
 }
 
+export async function enrichCookLogsWithRecipeNames(
+  logs: CookLog[],
+): Promise<CookLogWithRecipeName[]> {
+  const uniqueIds = [...new Set(logs.map((log) => log.recipe))];
+  const nameById = new Map<number, string>();
+
+  await Promise.all(
+    uniqueIds.map(async (id) => {
+      try {
+        const recipe = await getRecipe(id);
+        nameById.set(id, recipe.name);
+      } catch {
+        nameById.set(id, `Recipe ${id}`);
+      }
+    }),
+  );
+
+  return logs.map((log) => ({
+    ...log,
+    recipe_name: nameById.get(log.recipe) ?? `Recipe ${log.recipe}`,
+  }));
+}
+
 export async function listCookLogs(options: ListCookLogsOptions = {}): Promise<CookLog[]> {
   const all = await fetchAllCookLogPages(options);
   let result = sortCookLogsByDateDesc(filterCookLogs(all, options));
@@ -142,34 +165,46 @@ export async function createCookLog(
   return res.data;
 }
 
-export async function updateCookLog(
-  id: number,
-  recipeId: number,
-  servings: number,
-  rating?: number,
-  createdAt?: string,
-): Promise<CookLog> {
-  const payload: {
-    id: number;
-    recipe: number;
-    servings: number;
+export interface CookLogUpdatePatch {
+  recipe?: number;
+  servings?: number;
+  rating?: number;
+  createdAt?: string;
+}
+
+export async function getCookLog(id: number): Promise<CookLog> {
+  const res = await apiClient.get<CookLog>(`/cook-log/${id}/`);
+  return res.data;
+}
+
+/** Build PATCH body with only the fields being updated. */
+export function buildCookLogPatchBody(patch: CookLogUpdatePatch): {
+  recipe?: number;
+  servings?: number;
+  rating?: number;
+  created_at?: string;
+} {
+  const body: {
+    recipe?: number;
+    servings?: number;
     rating?: number;
     created_at?: string;
-  } = {
-    id,
-    recipe: recipeId,
-    servings,
-  };
+  } = {};
 
-  if (rating !== undefined) {
-    payload.rating = rating;
-  }
+  if (patch.recipe !== undefined) body.recipe = patch.recipe;
+  if (patch.servings !== undefined) body.servings = patch.servings;
+  if (patch.rating !== undefined) body.rating = patch.rating;
+  if (patch.createdAt !== undefined) body.created_at = patch.createdAt;
 
-  if (createdAt) {
-    payload.created_at = createdAt;
-  }
+  return body;
+}
 
-  const res = await apiClient.post<CookLog>('/cook-log/', payload);
+export async function updateCookLog(
+  id: number,
+  patch: CookLogUpdatePatch,
+): Promise<CookLog> {
+  const body = buildCookLogPatchBody(patch);
+  const res = await apiClient.patch<CookLog>(`/cook-log/${id}/`, body);
   return res.data;
 }
 
@@ -177,9 +212,7 @@ export async function deleteCookLog(id: number): Promise<void> {
   await apiClient.delete(`/cook-log/${id}/`);
 }
 
-export interface CookLogWithRecipeName extends CookLog {
-  recipe_name: string;
-}
+export type CookLogWithRecipeName = CookLog & { recipe_name: string };
 
 export async function findCookLogsByIngredient(
   ingredientName: string,

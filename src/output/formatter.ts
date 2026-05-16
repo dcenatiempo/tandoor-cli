@@ -1,4 +1,6 @@
-import { Recipe, MealPlan, ShoppingListEntry, Food } from '../api/types';
+import { Recipe, MealPlan, ShoppingListEntry, Food, CookLog } from '../api/types';
+
+export type CookLogListEntry = CookLog & { recipe_name: string };
 
 // Auto-disable colors when stdout is not a TTY (7.7)
 const isTTY = process.stdout.isTTY === true;
@@ -69,6 +71,28 @@ export function formatRecipeList(recipes: Recipe[]): void {
   recipes.forEach(r => {
     const date = dim(new Date(r.created_at).toLocaleDateString());
     console.log(`${dim(`[${r.id}]`)} ${cyan(r.name)}  ${date}`);
+  });
+}
+
+// 7.2b — cook log list (matches recipe list styling)
+export function formatCookLogList(
+  entries: CookLogListEntry[],
+  options?: { prefix?: string },
+): void {
+  if (entries.length === 0) {
+    console.log(dim('No cook log entries found.'));
+    return;
+  }
+
+  const prefix = options?.prefix ?? '';
+
+  entries.forEach((entry) => {
+    const date = dim(new Date(entry.created_at).toLocaleDateString());
+    const rating = entry.rating !== null ? `★${entry.rating}` : dim('no rating');
+    console.log(
+      `${prefix}${dim(`[${entry.id}]`)} ${cyan(entry.recipe_name)} ${dim(`[${entry.recipe}]`)}` +
+      `  ${entry.servings} servings  ${rating}  ${date}`,
+    );
   });
 }
 

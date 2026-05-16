@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { filterCookLogs, sortCookLogsByDateDesc } from '../api/cooklog';
+import {
+  filterCookLogs,
+  sortCookLogsByDateDesc,
+  buildCookLogPatchBody,
+} from '../api/cooklog';
 import type { CookLog } from '../api/types';
 
 function log(overrides: Partial<CookLog> = {}): CookLog {
@@ -45,5 +49,23 @@ describe('sortCookLogsByDateDesc()', () => {
     ];
     const sorted = sortCookLogsByDateDesc(logs);
     expect(sorted.map((e) => e.id)).toEqual([2, 1]);
+  });
+});
+
+describe('buildCookLogPatchBody()', () => {
+  it('includes only patched fields', () => {
+    expect(buildCookLogPatchBody({ servings: 6 })).toEqual({ servings: 6 });
+  });
+
+  it('maps createdAt to created_at', () => {
+    expect(
+      buildCookLogPatchBody({ createdAt: '2026-06-01T08:00:00.000Z' }),
+    ).toEqual({ created_at: '2026-06-01T08:00:00.000Z' });
+  });
+
+  it('can patch multiple fields at once', () => {
+    expect(
+      buildCookLogPatchBody({ recipe: 31, rating: 5 }),
+    ).toEqual({ recipe: 31, rating: 5 });
   });
 });

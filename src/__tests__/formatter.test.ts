@@ -2,13 +2,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   formatRecipe,
   formatRecipeList,
+  formatCookLogList,
   formatMealPlan,
   formatShoppingList,
   printJson,
   printSuccess,
   printError,
 } from '../output/formatter';
-import type { Recipe, MealPlan, ShoppingListEntry } from '../api/types';
+import type { Recipe, MealPlan, ShoppingListEntry, CookLog } from '../api/types';
 
 // In test env, isTTY is false so colors are stripped — test plain text output.
 
@@ -163,6 +164,56 @@ describe('formatRecipeList()', () => {
     const calls = logSpy.mock.calls.flat().join('\n');
     expect(calls).toContain('Pasta Carbonara');
     expect(calls).toContain('Pizza');
+  });
+});
+
+describe('formatCookLogList()', () => {
+  let logSpy: ReturnType<typeof vi.spyOn>;
+
+  const entry: CookLog & { recipe_name: string } = {
+    id: 14,
+    recipe: 31,
+    recipe_name: 'Sweet Potato + Black Bean Bowls',
+    servings: 8,
+    rating: 3,
+    created_at: '2026-05-15T12:00:00Z',
+    created_by: 1,
+  };
+
+  beforeEach(() => {
+    logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('prints "No cook log entries found." for empty list', () => {
+    formatCookLogList([]);
+    const calls = logSpy.mock.calls.flat().join('\n');
+    expect(calls).toContain('No cook log entries found.');
+  });
+
+  it('prints cook log ID, recipe name, recipe ID, servings, rating, and date', () => {
+    formatCookLogList([entry]);
+    const calls = logSpy.mock.calls.flat().join('\n');
+    expect(calls).toContain('14');
+    expect(calls).toContain('Sweet Potato + Black Bean Bowls');
+    expect(calls).toContain('31');
+    expect(calls).toContain('8 servings');
+    expect(calls).toContain('★3');
+  });
+
+  it('prints "no rating" when rating is null', () => {
+    formatCookLogList([{ ...entry, rating: null }]);
+    const calls = logSpy.mock.calls.flat().join('\n');
+    expect(calls).toContain('no rating');
+  });
+
+  it('applies line prefix when provided', () => {
+    formatCookLogList([entry], { prefix: '  ' });
+    const line = logSpy.mock.calls[0][0] as string;
+    expect(line.startsWith('  ')).toBe(true);
   });
 });
 
