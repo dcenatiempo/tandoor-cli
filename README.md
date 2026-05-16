@@ -481,8 +481,10 @@ Cook logs allow you to track when you cook recipes, including servings made and 
 List cook log entries, sorted by most recent first. Optionally filter by recipe and date range.
 
 ```bash
-tandoor cooklog list                    # default: 20 entries
-tandoor cooklog list --limit 50         # return up to 50 entries
+tandoor cooklog list                    # page 1, 20 entries (default)
+tandoor cooklog list --limit 50         # page 1, 50 entries
+tandoor cooklog list --page 2 --limit 20
+tandoor cooklog list --all              # every matching entry
 tandoor cooklog list --recipe 42        # only logs for recipe 42
 tandoor cooklog list --startdate 2026-04-01  # logs from April 1st onwards
 tandoor cooklog list --enddate 2026-04-30    # logs up to April 30th
@@ -494,14 +496,16 @@ tandoor cooklog list --json             # output raw JSON
 ```
 
 - `--recipe <id>` — filter by recipe ID
-- `--limit <n>` — maximum number of results (default 20)
+- `--limit <n>` — results per page (default 20; ignored when `--all` is set)
+- `--page <n>` — page number when using `--limit` (default 1)
+- `--all` — return every matching entry (loads the full cook log history; may be slow)
 - `--startdate <YYYY-MM-DD>` — filter entries from this date (inclusive)
 - `--enddate <YYYY-MM-DD>` — filter entries up to this date (inclusive)
 - `--min-rating <1-5>` — minimum rating (inclusive, filters out unrated entries)
 - `--max-rating <1-5>` — maximum rating (inclusive, filters out unrated entries)
 - `--json` — output raw JSON
 
-Each row shows the cook log ID, recipe ID, servings, rating (if set), and date cooked. Results are always sorted from most recent to oldest.
+Each row shows the cook log ID, recipe ID, servings, rating (if set), and date cooked. Results are sorted most recent first after loading entries from the API (rating filters are applied client-side).
 
 #### `tandoor cooklog ingredient <name>`
 

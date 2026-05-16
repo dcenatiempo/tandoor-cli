@@ -13,7 +13,9 @@ export function registerCooklogCommand(program: Command): void {
     .command('list')
     .description('List cook log entries (sorted by most recent first)')
     .option('--recipe <id>', 'Filter by recipe ID')
-    .option('--limit <number>', 'Maximum number of entries to return', '20')
+    .option('--limit <number>', 'Results per page', '20')
+    .option('--page <number>', 'Page number when using --limit (default 1)', '1')
+    .option('--all', 'Return every matching entry (ignores --limit and --page)')
     .option('--startdate <YYYY-MM-DD>', 'Filter entries from this date (inclusive)')
     .option('--enddate <YYYY-MM-DD>', 'Filter entries up to this date (inclusive)')
     .option('--min-rating <1-5>', 'Minimum rating (inclusive)')
@@ -46,9 +48,37 @@ export function registerCooklogCommand(program: Command): void {
           process.exit(1);
         }
 
+        if (opts.all) {
+          const page = parseInt(opts.page, 10);
+          if (!isNaN(page) && page > 1) {
+            printError('--all cannot be used with --page greater than 1.');
+            process.exit(1);
+          }
+        }
+
+        let limit: number | undefined;
+        if (!opts.all) {
+          limit = parseInt(opts.limit, 10);
+          if (isNaN(limit) || limit < 1) {
+            printError('--limit must be a positive integer.');
+            process.exit(1);
+          }
+        }
+
+        let page: number | undefined;
+        if (!opts.all) {
+          page = parseInt(opts.page, 10);
+          if (isNaN(page) || page < 1) {
+            printError('--page must be a positive integer.');
+            process.exit(1);
+          }
+        }
+
         const entries = await listCookLogs({
+          fetchAll: Boolean(opts.all),
           recipe: opts.recipe ? parseInt(opts.recipe, 10) : undefined,
-          limit: parseInt(opts.limit, 10),
+          limit,
+          page,
           startdate: opts.startdate,
           enddate: opts.enddate,
           minRating,

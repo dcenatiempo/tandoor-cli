@@ -85,7 +85,7 @@ tandoor <command> [options]
 **Cook Logs:**
 | Command | Description |
 |---|---|
-| `cooklog list [--recipe ID] [--limit N] [--startdate YYYY-MM-DD] [--enddate YYYY-MM-DD] [--min-rating 1-5] [--max-rating 1-5]` | List cook log entries (sorted by most recent first) |
+| `cooklog list [--recipe ID] [--limit N] [--page N] [--all] [--startdate YYYY-MM-DD] [--enddate YYYY-MM-DD] [--min-rating 1-5] [--max-rating 1-5]` | List cook log entries (sorted by most recent first) |
 | `cooklog ingredient <name> [--limit N] [--startdate YYYY-MM-DD] [--enddate YYYY-MM-DD] [--min-rating 1-5] [--max-rating 1-5]` | Find cook logs by ingredient name (e.g., "when did we last have eggs?") |
 
 **Households & Users:**

@@ -2,36 +2,116 @@ import { apiClient } from './client';
 import { CookLog, PaginatedResponse } from './types';
 import { getRecipe } from './recipes';
 
-export async function listCookLogs(options?: {
+export interface ListCookLogsOptions {
   recipe?: number;
   limit?: number;
+  page?: number;
+  fetchAll?: boolean;
   startdate?: string;
   enddate?: string;
   minRating?: number;
   maxRating?: number;
-}): Promise<CookLog[]> {
-  const params: Record<string, string | number> = {};
-  if (options?.recipe) params['recipe'] = options.recipe;
-  if (options?.limit) params['limit'] = options.limit;
-  if (options?.startdate) params['created_at__gte'] = options.startdate;
-  if (options?.enddate) params['created_at__lte'] = options.enddate;
+}
 
-  const res = await apiClient.get<PaginatedResponse<CookLog>>('/cook-log/', { params });
-  
-  // Sort by created_at descending (most recent first)
-  let sorted = res.data.results.sort((a, b) => {
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+/** Max page size for Tandoor's DefaultPagination on /cook-log/. */
+const COOKLOG_PAGE_SIZE = 200;
+
+const PARALLEL_PAGE_FETCHES = 8;
+
+function buildCookLogListParams(
+  opts: ListCookLogsOptions,
+  page: number,
+  pageSize: number,
+): Record<string, string | number> {
+  const params: Record<string, string | number> = {
+    page_size: pageSize,
+    page,
+  };
+  if (opts.recipe) params.recipe = opts.recipe;
+  if (opts.startdate) params.created_at__gte = opts.startdate;
+  if (opts.enddate) params.created_at__lte = opts.enddate;
+  return params;
+}
+
+async function fetchCookLogPage(
+  opts: ListCookLogsOptions,
+  page: number,
+  pageSize: number,
+): Promise<PaginatedResponse<CookLog>> {
+  const res = await apiClient.get<PaginatedResponse<CookLog>>('/cook-log/', {
+    params: buildCookLogListParams(opts, page, pageSize),
   });
-  
-  // Filter by rating if specified (client-side since API may not support rating filters)
-  if (options?.minRating !== undefined) {
-    sorted = sorted.filter((log) => log.rating !== null && log.rating >= options.minRating!);
+  return res.data;
+}
+
+async function fetchAllCookLogPages(opts: ListCookLogsOptions): Promise<CookLog[]> {
+  const first = await fetchCookLogPage(opts, 1, COOKLOG_PAGE_SIZE);
+  const all = [...first.results];
+
+  const totalPages = Math.max(1, Math.ceil(first.count / COOKLOG_PAGE_SIZE));
+  if (totalPages <= 1) return all;
+
+  for (let batchStart = 2; batchStart <= totalPages; batchStart += PARALLEL_PAGE_FETCHES) {
+    const pages: number[] = [];
+    for (
+      let page = batchStart;
+      page < batchStart + PARALLEL_PAGE_FETCHES && page <= totalPages;
+      page++
+    ) {
+      pages.push(page);
+    }
+
+    const pageResponses = await Promise.all(
+      pages.map((page) => fetchCookLogPage(opts, page, COOKLOG_PAGE_SIZE)),
+    );
+
+    for (const data of pageResponses) {
+      all.push(...data.results);
+    }
   }
-  if (options?.maxRating !== undefined) {
-    sorted = sorted.filter((log) => log.rating !== null && log.rating <= options.maxRating!);
+
+  return all;
+}
+
+/**
+ * Apply date and rating filters. Date filters run client-side as a fallback when
+ * the API does not apply created_at query params.
+ */
+export function filterCookLogs(logs: CookLog[], opts: ListCookLogsOptions): CookLog[] {
+  let result = logs;
+
+  if (opts.startdate) {
+    result = result.filter((log) => log.created_at.slice(0, 10) >= opts.startdate!);
   }
-  
-  return sorted;
+  if (opts.enddate) {
+    result = result.filter((log) => log.created_at.slice(0, 10) <= opts.enddate!);
+  }
+  if (opts.minRating !== undefined) {
+    result = result.filter((log) => log.rating !== null && log.rating >= opts.minRating!);
+  }
+  if (opts.maxRating !== undefined) {
+    result = result.filter((log) => log.rating !== null && log.rating <= opts.maxRating!);
+  }
+
+  return result;
+}
+
+export function sortCookLogsByDateDesc(logs: CookLog[]): CookLog[] {
+  return [...logs].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+}
+
+export async function listCookLogs(options: ListCookLogsOptions = {}): Promise<CookLog[]> {
+  const all = await fetchAllCookLogPages(options);
+  let result = sortCookLogsByDateDesc(filterCookLogs(all, options));
+
+  if (options.fetchAll) return result;
+
+  const limit = options.limit ?? 20;
+  const page = options.page ?? 1;
+  const start = (page - 1) * limit;
+  return result.slice(start, start + limit);
 }
 
 export async function createCookLog(
@@ -111,24 +191,21 @@ export async function findCookLogsByIngredient(
     maxRating?: number;
   },
 ): Promise<CookLogWithRecipeName[]> {
-  // First, get all cook logs (with a reasonable limit)
   const allLogs = await listCookLogs({
-    limit: options?.limit || 100,
+    fetchAll: true,
     startdate: options?.startdate,
     enddate: options?.enddate,
     minRating: options?.minRating,
     maxRating: options?.maxRating,
   });
 
-  // For each cook log, fetch the recipe and check if it contains the ingredient
   const matchingLogs: CookLogWithRecipeName[] = [];
   const ingredientLower = ingredientName.toLowerCase();
 
   for (const log of allLogs) {
     try {
       const recipe = await getRecipe(log.recipe);
-      
-      // Check if any ingredient in any step matches
+
       const hasIngredient = recipe.steps.some((step) =>
         step.ingredients.some((ing) =>
           ing.food.name.toLowerCase().includes(ingredientLower),
@@ -141,11 +218,11 @@ export async function findCookLogsByIngredient(
           recipe_name: recipe.name,
         });
       }
-    } catch (err) {
-      // Skip recipes that can't be fetched (might be deleted)
+    } catch {
       continue;
     }
   }
 
-  return matchingLogs;
+  const limit = options?.limit ?? 100;
+  return matchingLogs.slice(0, limit);
 }
