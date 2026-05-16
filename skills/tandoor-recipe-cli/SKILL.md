@@ -62,7 +62,7 @@ tandoor <command> [options]
 **Recipes:**
 | Command | Description |
 |---|---|
-| `list [--limit N]` | List recipes (default 20, max 100) |
+| `list [--limit N] [--page N] [--all]` | List recipes (default 20 per page, max 100) |
 | `search <query>` | Search recipes by keyword |
 | `get <id>` | Get full recipe details |
 | `random` | Get a random recipe |

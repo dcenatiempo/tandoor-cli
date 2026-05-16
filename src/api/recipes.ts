@@ -6,9 +6,42 @@ import {
   RecipeFromSourceResponse,
 } from './types';
 
-export async function listRecipes(limit: number): Promise<Recipe[]> {
+export interface ListRecipesOptions {
+  limit?: number;
+  page?: number;
+  fetchAll?: boolean;
+}
+
+/** Max page size for Tandoor's RecipePagination. */
+const RECIPE_LIST_PAGE_SIZE = 100;
+
+export async function listRecipes(opts: ListRecipesOptions): Promise<Recipe[]> {
+  if (opts.fetchAll) {
+    const all: Recipe[] = [];
+    let page = 1;
+
+    while (true) {
+      const res = await apiClient.get<PaginatedResponse<Recipe>>('/recipe/', {
+        params: {
+          sort_order: '-created_at',
+          page_size: RECIPE_LIST_PAGE_SIZE,
+          page,
+        },
+      });
+      all.push(...res.data.results);
+      if (!res.data.next) break;
+      page += 1;
+    }
+
+    return all;
+  }
+
   const res = await apiClient.get<PaginatedResponse<Recipe>>('/recipe/', {
-    params: { sort_order: '-created_at', page_size: limit },
+    params: {
+      sort_order: '-created_at',
+      page_size: opts.limit ?? 20,
+      page: opts.page ?? 1,
+    },
   });
   return res.data.results;
 }

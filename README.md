@@ -154,10 +154,16 @@ npx tandoor-cli configure
 List recipes, sorted by most recently created.
 
 ```bash
-tandoor list                  # default: 20 recipes
-tandoor list --limit 50       # up to 100 (values above 100 are capped)
+tandoor list                  # page 1, 20 recipes (default)
+tandoor list --limit 50       # page 1, up to 50 (values above 100 are capped)
+tandoor list --page 2 --limit 20
+tandoor list --all             # every recipe
 tandoor list --json           # output raw JSON
 ```
+
+- `--limit <n>` — results per page (default 20, max 100; ignored when `--all` is set)
+- `--page <n>` — page number when using `--limit` (default 1)
+- `--all` — return every recipe (may be slow on large collections)
 
 #### `tandoor search <query>`
 
