@@ -135,6 +135,33 @@ If `TANDOOR_API_TOKEN` is not set, the CLI falls back to HTTP Basic Authenticati
 
 ---
 
+## Output formats and deprecated flags
+
+Many commands accept **`--format <type>`** to control stdout (default: `text`):
+
+| `--format` | Description |
+|------------|-------------|
+| `text` | Human-readable output (default) |
+| `json` | Slim JSON where supported (e.g. recipe add/update payload shape with `id` on `get` / `random` / `list` / `search`) |
+| `api` | Raw JSON as returned by the Tandoor API |
+
+**Deprecated (output):** `--json` without a file path on read/write commands that emit JSON. It is an alias for **`--format api`** and prints a warning to stderr. Prefer `--format api` or `--format json` as appropriate.
+
+**Recommended (input):** pass recipe JSON files with **`--file <path>`** on `add` and `update`.
+
+**Deprecated (input):** `--json <path>` on `add` and `update` still works but prints a warning; use `--file` instead.
+
+| Old | Recommended |
+|-----|-------------|
+| `tandoor get 1 --json` | `tandoor get 1 --format api` (full API) or `--format json` (slim, editable shape) |
+| `tandoor list --json` | `tandoor list --format api` |
+| `tandoor add --json recipe.json` | `tandoor add --file recipe.json` |
+| `tandoor update 42 --json patch.json` | `tandoor update 42 --file patch.json` |
+
+Deprecated flags remain **backward compatible** with prior releases (same behavior, plus stderr warnings).
+
+---
+
 ## Commands
 
 ### `tandoor configure`
@@ -158,7 +185,7 @@ tandoor list                  # page 1, 20 recipes (default)
 tandoor list --limit 50       # page 1, up to 50 (values above 100 are capped)
 tandoor list --page 2 --limit 20
 tandoor list --all             # every recipe
-tandoor list --json           # output raw JSON
+tandoor list --format api     # raw API JSON (or deprecated: --json)
 ```
 
 - `--limit <n>` — results per page (default 20, max 100; ignored when `--all` is set)
@@ -171,7 +198,7 @@ Search recipes by keyword.
 
 ```bash
 tandoor search pasta
-tandoor search "chicken soup" --json
+tandoor search "chicken soup" --format api
 ```
 
 #### `tandoor get <id>`
@@ -180,7 +207,7 @@ Get full details of a recipe: name, description, servings, times, ingredients, a
 
 ```bash
 tandoor get 42
-tandoor get 42 --json
+tandoor get 42 --format json   # slim, editable shape (use --format api for full API)
 ```
 
 #### `tandoor random`
@@ -189,7 +216,7 @@ Retrieve a random recipe.
 
 ```bash
 tandoor random
-tandoor random --json
+tandoor random --format json
 ```
 
 #### `tandoor add`
@@ -201,7 +228,8 @@ Create a new recipe interactively or from a JSON file.
 tandoor add
 
 # From a JSON file
-tandoor add --json recipe.json
+tandoor add --file recipe.json
+# Deprecated: tandoor add --json recipe.json
 ```
 
 Example `recipe.json`:
@@ -225,12 +253,13 @@ Example `recipe.json`:
 }
 ```
 
-#### `tandoor update <id> --json <file>`
+#### `tandoor update <id> --file <file>`
 
 Patch an existing recipe with fields from a JSON file.
 
 ```bash
-tandoor update 42 --json patch.json
+tandoor update 42 --file patch.json
+# Deprecated: tandoor update 42 --json patch.json
 ```
 
 `patch.json` only needs to include the fields you want to change.
@@ -250,12 +279,12 @@ Import a recipe directly from a URL using Tandoor's built-in scraper. Supports h
 
 ```bash
 tandoor import https://www.bbcgoodfood.com/recipes/easy-chocolate-cake
-tandoor import https://www.seriouseats.com/the-best-pizza-dough-recipe --json
+tandoor import https://www.seriouseats.com/the-best-pizza-dough-recipe --format api
 tandoor import https://www.bbcgoodfood.com/recipes/easy-chocolate-cake --dry-run
 ```
 
 - `--dry-run` — scrapes and previews the recipe without saving it to Tandoor
-- `--json` — outputs the created (or previewed) recipe as raw JSON
+- `--format api` — outputs the created (or previewed) recipe as raw JSON (`--json` deprecated alias)
 - If the scraper detects a possible duplicate already in your collection, a warning is printed to stderr but the import still proceeds.
 
 #### `tandoor image <recipeId> <imagePath>`
@@ -281,7 +310,7 @@ List all meal plan entries. Optionally filter by date range.
 
 ```bash
 tandoor mealplan list
-tandoor mealplan list --json
+tandoor mealplan list --format api
 tandoor mealplan list --startdate 2026-06-01
 tandoor mealplan list --enddate 2026-06-08
 tandoor mealplan list --startdate 2026-06-01 --enddate 2026-06-08
@@ -318,7 +347,7 @@ List all shopping list entries.
 
 ```bash
 tandoor shopping list
-tandoor shopping list --json
+tandoor shopping list --format api
 ```
 
 #### `tandoor shopping add`
@@ -337,7 +366,7 @@ Mark a shopping list entry as checked, or check all entries at once with `--all`
 ```bash
 tandoor shopping check 3        # check a single entry by ID
 tandoor shopping check --all    # check every unchecked entry
-tandoor shopping check --all --json
+tandoor shopping check --all --format api
 ```
 
 #### `tandoor shopping clear`
@@ -363,7 +392,7 @@ List all households in the space. If you don't have direct access to the househo
 
 ```bash
 tandoor household list
-tandoor household list --json
+tandoor household list --format api
 ```
 
 #### `tandoor household get <id>`
@@ -372,7 +401,7 @@ Get details of a household by ID (requires admin privileges).
 
 ```bash
 tandoor household get 1
-tandoor household get 1 --json
+tandoor household get 1 --format api
 ```
 
 #### `tandoor household add <name>`
@@ -381,7 +410,7 @@ Create a new household (requires admin privileges).
 
 ```bash
 tandoor household add "My Family"
-tandoor household add "Roommates" --json
+tandoor household add "Roommates" --format api
 ```
 
 #### `tandoor household edit <id>`
@@ -390,7 +419,7 @@ Rename a household (requires admin privileges).
 
 ```bash
 tandoor household edit 1 --name "Updated Name"
-tandoor household edit 1 --name "New Household Name" --json
+tandoor household edit 1 --name "New Household Name" --format api
 ```
 
 #### `tandoor household delete <id>`
@@ -408,7 +437,7 @@ List all users in the space.
 
 ```bash
 tandoor household users list
-tandoor household users list --json
+tandoor household users list --format api
 ```
 
 #### `tandoor household users memberships`
@@ -417,7 +446,7 @@ List all user-space memberships, showing which household each user belongs to.
 
 ```bash
 tandoor household users memberships
-tandoor household users memberships --json
+tandoor household users memberships --format api
 ```
 
 #### `tandoor household users assign <user-space-id> <household-id>`
@@ -426,7 +455,7 @@ Assign a user (by their user-space ID) to a different household (requires admin 
 
 ```bash
 tandoor household users assign 2 1
-tandoor household users assign 2 1 --json
+tandoor household users assign 2 1 --format api
 ```
 
 To find the user-space ID, run `tandoor household users memberships` and look for the `[id]` column.
@@ -437,7 +466,7 @@ List all invite links (requires admin privileges).
 
 ```bash
 tandoor household invite list
-tandoor household invite list --json
+tandoor household invite list --format api
 ```
 
 #### `tandoor household invite create <household-id>`
@@ -451,13 +480,13 @@ tandoor household invite create 1
 tandoor household invite create 1 --email user@example.com
 tandoor household invite create 1 --expires 2026-12-31
 tandoor household invite create 1 --group-id 2
-tandoor household invite create 1 --email user@example.com --expires 2026-12-31 --json
+tandoor household invite create 1 --email user@example.com --expires 2026-12-31 --format api
 ```
 
 - `--email <email>` — pre-fill the invitee's email address
 - `--expires <YYYY-MM-DD>` — set an expiry date for the link
 - `--group-id <id>` — assign the new user to a group by ID (default: 2 for "user" group; use 3 for "admin")
-- `--json` — output the created link as raw JSON
+- `--format api` — output the created link as raw JSON (`--json` deprecated alias)
 
 The generated URL is printed to stdout and can be shared directly. The invitee visits the link, registers, and is automatically added to the household.
 
@@ -492,7 +521,7 @@ tandoor cooklog list --startdate 2026-04-01 --enddate 2026-04-30  # logs in Apri
 tandoor cooklog list --min-rating 4     # only 4 or 5 star ratings
 tandoor cooklog list --max-rating 2     # only 1 or 2 star ratings
 tandoor cooklog list --min-rating 4 --max-rating 4  # exactly 4 stars
-tandoor cooklog list --json             # output raw JSON
+tandoor cooklog list --format api
 ```
 
 - `--recipe <id>` — filter by recipe ID
@@ -503,7 +532,7 @@ tandoor cooklog list --json             # output raw JSON
 - `--enddate <YYYY-MM-DD>` — filter entries up to this date (inclusive)
 - `--min-rating <1-5>` — minimum rating (inclusive, filters out unrated entries)
 - `--max-rating <1-5>` — maximum rating (inclusive, filters out unrated entries)
-- `--json` — output raw JSON
+- `--format api` — output raw JSON (`--json` deprecated alias)
 
 Each row shows the cook log ID, recipe ID, servings, rating (if set), and date cooked. Results are sorted most recent first after loading entries from the API (rating filters are applied client-side).
 
@@ -518,7 +547,7 @@ tandoor cooklog ingredient eggs --limit 50         # search up to 50 recent logs
 tandoor cooklog ingredient eggs --startdate 2026-04-01 --enddate 2026-04-30  # eggs in April
 tandoor cooklog ingredient eggs --min-rating 4     # only highly-rated egg recipes (4-5 stars)
 tandoor cooklog ingredient eggs --max-rating 2     # only poorly-rated egg recipes (1-2 stars)
-tandoor cooklog ingredient eggs --json             # output raw JSON
+tandoor cooklog ingredient eggs --format api
 ```
 
 - `<name>` — ingredient name to search for (case-insensitive, partial match)
@@ -527,7 +556,7 @@ tandoor cooklog ingredient eggs --json             # output raw JSON
 - `--enddate <YYYY-MM-DD>` — filter entries up to this date (inclusive)
 - `--min-rating <1-5>` — minimum rating (inclusive, filters out unrated entries)
 - `--max-rating <1-5>` — maximum rating (inclusive, filters out unrated entries)
-- `--json` — output raw JSON
+- `--format api` — output raw JSON (`--json` deprecated alias)
 
 The output shows:
 - Most recent occurrence with date and recipe name
@@ -554,7 +583,7 @@ tandoor cooklog add --recipe 42 --servings 4 --rating 5 --date "2026-04-27T04:00
 - `--servings <number>` — number of servings made (required)
 - `--rating <1-5>` — optional rating from 1 to 5
 - `--date <ISO8601>` — optional date/time in ISO 8601 format (defaults to now)
-- `--json` — output the created log as raw JSON
+- `--format api` — output the created log as raw JSON (`--json` deprecated alias)
 
 #### `tandoor cooklog update <id>`
 
@@ -594,7 +623,7 @@ tandoor food list --search butter           # filter by search term
 tandoor food list --ignored                 # only foods with ignore_shopping set
 tandoor food list --onhand                  # only foods marked as on hand
 tandoor food list --ignored --search butter # combine filters
-tandoor food list --json                    # output raw JSON
+tandoor food list --format api
 ```
 
 - `--limit <n>` — results per page (default 20; ignored when `--all` is set)
@@ -603,7 +632,7 @@ tandoor food list --json                    # output raw JSON
 - `--search <term>` — filter results by keyword
 - `--ignored` — only show foods that are on the ignore-shopping list (filtered client-side; may scan multiple API pages)
 - `--onhand` — only show foods marked as on hand (in your pantry; filtered client-side the same way)
-- `--json` — output raw JSON
+- `--format api` — output raw JSON (`--json` deprecated alias)
 
 **Tip:** Combine with `--search` to narrow the scan (e.g. `tandoor food list --onhand --search milk`). `--all` with `--ignored` or `--onhand` walks the full food library.
 
@@ -616,11 +645,11 @@ Edit a food ingredient's properties. Accepts either a numeric ID or an exact nam
 ```bash
 tandoor food edit butter --ignore-shopping true
 tandoor food edit 42 --ignore-shopping false
-tandoor food edit "olive oil" --ignore-shopping true --json
+tandoor food edit "olive oil" --ignore-shopping true --format api
 ```
 
 - `--ignore-shopping <true|false>` — set whether this food is excluded from shopping lists
-- `--json` — output the updated food as raw JSON
+- `--format api` — output the updated food as raw JSON (`--json` deprecated alias)
 
 #### `tandoor food ignore <id-or-name>`
 
@@ -633,7 +662,7 @@ tandoor food ignore butter --unset   # clear the flag
 ```
 
 - `--unset` — clear the flag (re-enable shopping for this food)
-- `--json` — output the updated food as raw JSON
+- `--format api` — output the updated food as raw JSON (`--json` deprecated alias)
 
 #### `tandoor food onhand <id-or-name>`
 
@@ -646,7 +675,7 @@ tandoor food onhand eggs --unset
 ```
 
 - `--unset` — clear the on-hand flag
-- `--json` — output the updated food as raw JSON
+- `--format api` — output the updated food as raw JSON (`--json` deprecated alias)
 
 ---
 

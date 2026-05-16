@@ -1,7 +1,7 @@
 ---
 name: tandoor-recipe-cli
 description: Manage recipes, meal plans, and shopping lists on a Tandoor Recipe Manager instance via CLI.
-version: 1.1.4
+version: 1.2.0
 compatibility: ">=18"
 license: MIT
 metadata:
@@ -55,6 +55,29 @@ If `tandoor -V` produces no valid version, see the setup instructions in `refere
 tandoor <command> [options]
 ```
 
+### Output formats and deprecated flags
+
+Commands that print data accept **`--format text|json|api`** (default: `text`):
+
+| `--format` | Use for |
+|------------|---------|
+| `text` | Human-readable output (default) |
+| `json` | Slim JSON where supported (recipe add/update shape + `id` on `get`, `list`, `search`, `random`) |
+| `api` | Raw Tandoor API JSON |
+
+**Deprecated (output):** `--json` with no file path — alias for **`--format api`**; stderr warning. Do not use in new agent workflows.
+
+**Recommended (input):** `tandoor add --file recipe.json`, `tandoor update <id> --file patch.json`
+
+**Deprecated (input):** `tandoor add --json <file>`, `tandoor update <id> --json <file>` — still work with stderr warning.
+
+| Deprecated | Use instead |
+|------------|-------------|
+| `tandoor get 1 --json` | `--format api` (full) or `--format json` (slim, for edit round-trips) |
+| `tandoor list --json` | `--format api` |
+| `tandoor add --json recipe.json` | `--file recipe.json` |
+| `tandoor update 42 --json patch.json` | `--file patch.json` |
+
 ### Commands
 
 #### Read Operations (Safe)
@@ -101,8 +124,8 @@ tandoor <command> [options]
 
 | Command | Description | Approval Required |
 |---|---|---|
-| `add [--json file]` | Create a recipe | ✓ Before execution |
-| `update <id> --json file` | Patch an existing recipe | ✓ Before execution |
+| `add [--file file] [--interactive]` | Create a recipe (`--json <file>` deprecated) | ✓ Before execution |
+| `update <id> --file file` | Patch an existing recipe (`--json <file>` deprecated) | ✓ Before execution |
 | `import <url> [--dry-run]` | Import a recipe from a URL | ✓ Before execution |
 | `image <recipeId> <imagePath>` | Upload an image to a recipe | ✓ Before execution |
 | `mealplan add --recipe ID --date YYYY-MM-DD --meal-type N` | Add a meal plan entry | ✓ Before execution |
@@ -139,7 +162,7 @@ tandoor <command> [options]
 | `household invite create <household-id> [--email EMAIL] [--expires DATE] [--group-id ID]` | Create invite link | ✓✓ Space-owner token + explicit confirmation |
 | `household invite delete <id> [--force]` | Delete invite link | ✓✓ Admin token + explicit confirmation |
 
-All read commands accept `--json` for machine-readable output suitable for agent pipelines.
+Read commands accept **`--format json`** (slim, where supported) or **`--format api`** (raw). Deprecated: `--json` (same as `--format api`).
 
 ### Agent Behavior Rules
 
@@ -184,19 +207,24 @@ tandoor configure
 
 **Read example — list recipes as JSON:**
 ```bash
-tandoor list --limit 5 --json
+tandoor list --limit 5 --format api
+```
+
+**Read example — get recipe for editing:**
+```bash
+tandoor get 42 --format json
 ```
 
 **Write example — create a recipe from a JSON file:**
 ```bash
 # Agent should first ask: "I will create a new recipe from recipe.json. Proceed?"
 # Only after user confirms:
-tandoor add --json recipe.json
+tandoor add --file recipe.json
 ```
 
 ### Recipe JSON Schema
 
-When creating recipes with `tandoor add --json <file>`, the JSON file must conform to the following structure:
+When creating recipes with `tandoor add --file <file>` (or deprecated `--json <file>`), the JSON file must conform to the following structure:
 
 **TypeScript Definition:**
 ```typescript
@@ -321,7 +349,7 @@ tandoor shopping check --all
 tandoor cooklog add --recipe 42 --servings 4 --rating 5
 
 # Read example — list cook logs for a specific recipe:
-tandoor cooklog list --recipe 42 --json
+tandoor cooklog list --recipe 42 --format api
 
 # Read example — find when you last had eggs:
 tandoor cooklog ingredient eggs

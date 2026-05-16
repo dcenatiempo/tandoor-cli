@@ -2,16 +2,24 @@ import { Command } from 'commander';
 import * as fs from 'fs';
 import { updateRecipe } from '../api/recipes';
 import { printSuccess, printError } from '../output/formatter';
+import { resolveInputFile } from '../output/format-option';
 import { RecipeCreatePayload } from '../api/types';
 
 export function registerUpdateCommand(program: Command): void {
   program
     .command('update <id>')
     .description('Update a recipe by ID using a JSON patch file')
-    .requiredOption('--json <file>', 'JSON file containing fields to update')
+    .option('--file <path>', 'JSON file containing fields to update')
+    .option('--json <path>', 'Deprecated: use --file')
     .action(async (id: string, opts) => {
       try {
-        const raw = fs.readFileSync(opts.json, 'utf-8');
+        const path = resolveInputFile(opts);
+        if (!path) {
+          printError('Missing required option: --file <path>');
+          process.exit(1);
+        }
+
+        const raw = fs.readFileSync(path, 'utf-8');
         const patch = JSON.parse(raw) as Partial<RecipeCreatePayload>;
         const recipe = await updateRecipe(parseInt(id, 10), patch);
         printSuccess(`Updated recipe #${recipe.id}: ${recipe.name}`);

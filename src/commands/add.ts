@@ -2,7 +2,8 @@ import { Command } from 'commander';
 import * as fs from 'fs';
 import * as readline from 'readline';
 import { createRecipe } from '../api/recipes';
-import { printJson, printSuccess, printError } from '../output/formatter';
+import { printSuccess, printError } from '../output/formatter';
+import { resolveInputFile } from '../output/format-option';
 import { isValidName, parseIngredientLine } from '../utils';
 import { RecipeCreatePayload, StepCreatePayload, IngredientCreatePayload } from '../api/types';
 
@@ -17,7 +18,6 @@ async function collectInteractive(): Promise<RecipeCreatePayload> {
   });
 
   try {
-    // Name is required — re-prompt until non-empty
     let name = '';
     while (!isValidName(name)) {
       name = await prompt(rl, 'Recipe name (required): ');
@@ -77,19 +77,23 @@ export function registerAddCommand(program: Command): void {
   program
     .command('add')
     .description('Create a new recipe from a JSON file (use --interactive for prompted input)')
-    .option('--json <file>', 'Read recipe payload from a JSON file')
+    .option('--file <path>', 'JSON file containing the recipe to create')
+    .option('--json <path>', 'Deprecated: use --file')
     .option('--interactive', 'Enable interactive prompts to build the recipe')
     .action(async (opts) => {
       try {
         let payload: RecipeCreatePayload;
 
-        if (opts.json) {
-          const raw = fs.readFileSync(opts.json, 'utf-8');
+        const filePath = resolveInputFile(opts);
+        if (filePath) {
+          const raw = fs.readFileSync(filePath, 'utf-8');
           payload = JSON.parse(raw) as RecipeCreatePayload;
         } else if (opts.interactive) {
           payload = await collectInteractive();
         } else {
-          printError('No input provided. Use --json <file> to supply a recipe payload, or --interactive for prompted input.');
+          printError(
+            'No input provided. Use --file <path> to supply a recipe payload, or --interactive for prompted input.',
+          );
           process.exit(1);
         }
 

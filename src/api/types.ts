@@ -18,6 +18,7 @@ export interface Ingredient {
   unit: Unit | null;
   food: Food;
   note: string;
+  order?: number;
 }
 
 export interface Step {
@@ -120,6 +121,7 @@ export interface CookLog {
   recipe: number;
   servings: number;
   rating: number | null;
+  comment?: string;
   created_at: string;  // ISO 8601
   created_by: number;
 }
@@ -152,6 +154,13 @@ export interface RecipeCreatePayload {
   working_time?: number;
   waiting_time?: number;
   steps: StepCreatePayload[];
+}
+
+/** Recipe create/update payload plus id, as returned by `--format json` on recipe commands. */
+export interface RecipeGetPayload extends Omit<RecipeCreatePayload, 'steps'> {
+  id: number;
+  /** Omitted when the API response has no step data (e.g. list/search summaries). */
+  steps?: StepCreatePayload[];
 }
 
 export interface RecipeFromSourceResponse {
