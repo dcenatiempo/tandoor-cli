@@ -108,6 +108,22 @@ describe('formatRecipe()', () => {
     const r = { ...baseRecipe, keywords: [] };
     expect(() => formatRecipe(r)).not.toThrow();
   });
+
+  it('handles recipe with no steps', () => {
+    const r = { ...baseRecipe, steps: undefined as unknown as Recipe['steps'] };
+    expect(() => formatRecipe(r)).not.toThrow();
+  });
+
+  it('skips keywords with empty names', () => {
+    const r = {
+      ...baseRecipe,
+      keywords: [{ id: 1, name: 'Italian' }, { id: 2, name: '' }],
+    };
+    formatRecipe(r);
+    const calls = logSpy.mock.calls.flat().join('\n');
+    expect(calls).toContain('Italian');
+    expect(calls).not.toMatch(/Keywords:.*,,/);
+  });
 });
 
 describe('formatRecipeList()', () => {

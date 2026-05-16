@@ -28,13 +28,16 @@ export function formatRecipe(recipe: Recipe): void {
     dim(`Wait: ${recipe.waiting_time} min`)
   );
 
-  if (recipe.keywords && recipe.keywords.length > 0) {
-    console.log(dim(`Keywords: ${recipe.keywords.map(k => k.name).join(', ')}`));
+  const keywordNames = (recipe.keywords ?? [])
+    .map((k) => k.name)
+    .filter(Boolean);
+  if (keywordNames.length > 0) {
+    console.log(dim(`Keywords: ${keywordNames.join(', ')}`));
   }
 
   console.log('');
 
-  recipe.steps.forEach((step, idx) => {
+  (recipe.steps ?? []).forEach((step, idx) => {
     console.log(bold(`Step ${idx + 1}`));
 
     if (step.ingredients && step.ingredients.length > 0) {

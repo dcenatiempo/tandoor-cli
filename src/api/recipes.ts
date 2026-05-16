@@ -62,7 +62,10 @@ export async function randomRecipe(): Promise<Recipe | null> {
   const res = await apiClient.get<PaginatedResponse<Recipe>>('/recipe/', {
     params: { random: true, page_size: 1 },
   });
-  return res.data.results[0] ?? null;
+  const summary = res.data.results[0];
+  if (!summary) return null;
+  // List endpoint omits steps/ingredients; fetch full recipe for display.
+  return getRecipe(summary.id);
 }
 
 export async function createRecipe(payload: RecipeCreatePayload): Promise<Recipe> {
