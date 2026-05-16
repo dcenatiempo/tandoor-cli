@@ -172,8 +172,10 @@ describe('formatMealPlan()', () => {
   const entry: MealPlan = {
     id: 7,
     recipe: { id: 42, name: 'Pasta Carbonara' },
-    date: '2024-03-10',
+    from_date: '2024-03-10T12:00:00Z',
+    to_date: '2024-03-10T23:59:59Z',
     meal_type: { id: 1, name: 'Dinner' },
+    servings: 4,
   };
 
   beforeEach(() => {

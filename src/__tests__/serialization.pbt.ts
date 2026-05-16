@@ -79,11 +79,13 @@ const mealPlanArb: fc.Arbitrary<MealPlan> = fc.record({
     id: fc.integer({ min: 1 }),
     name: fc.string({ minLength: 1, maxLength: 50 }),
   }),
-  date: fc.constant('2024-06-15'),
+  from_date: fc.constant('2024-06-15T00:00:00Z'),
+  to_date: fc.constant('2024-06-15T23:59:59Z'),
   meal_type: fc.record({
     id: fc.integer({ min: 1 }),
     name: fc.string({ minLength: 1, maxLength: 20 }),
   }),
+  servings: fc.integer({ min: 1, max: 20 }),
 });
 
 const shoppingEntryArb: fc.Arbitrary<ShoppingListEntry> = fc.record({
@@ -341,7 +343,7 @@ describe('Property 8: Formatter completeness', () => {
         formatMealPlan(entry);
         const output = logSpy.mock.calls.flat().join('\n');
         expect(output).toContain(String(entry.id));
-        expect(output).toContain(entry.date);
+        expect(output).toContain(entry.from_date.split('T')[0]);
         expect(output).toContain(entry.meal_type.name);
         expect(output).toContain(entry.recipe.name);
       }),
