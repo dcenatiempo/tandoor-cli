@@ -572,22 +572,30 @@ tandoor cooklog delete 2
 
 #### `tandoor food list`
 
-List food ingredients, with optional search, limit, and ignore filter.
+List food ingredients, with optional search, pagination, and filters.
 
 ```bash
-tandoor food list                           # default: 20 items
-tandoor food list --limit 10                # return up to 10 items
+tandoor food list                           # page 1, 20 items (default)
+tandoor food list --limit 10                # page 1, 10 items
+tandoor food list --page 2 --limit 10      # second page of 10
+tandoor food list --all                     # every food (no limit)
+tandoor food list --all --onhand            # every on-hand food
 tandoor food list --search butter           # filter by search term
-tandoor food list --limit 10 --search butter
 tandoor food list --ignored                 # only foods with ignore_shopping set
+tandoor food list --onhand                  # only foods marked as on hand
 tandoor food list --ignored --search butter # combine filters
 tandoor food list --json                    # output raw JSON
 ```
 
-- `--limit <n>` — maximum number of results (default 20)
+- `--limit <n>` — results per page (default 20; ignored when `--all` is set)
+- `--page <n>` — page number when using `--limit` (default 1; cannot be used with `--all` except page 1)
+- `--all` — return every matching food (may be slow on large libraries)
 - `--search <term>` — filter results by keyword
-- `--ignored` — only show foods that are on the ignore-shopping list
+- `--ignored` — only show foods that are on the ignore-shopping list (filtered client-side; may scan multiple API pages)
+- `--onhand` — only show foods marked as on hand (in your pantry; filtered client-side the same way)
 - `--json` — output raw JSON
+
+**Tip:** Combine with `--search` to narrow the scan (e.g. `tandoor food list --onhand --search milk`). `--all` with `--ignored` or `--onhand` walks the full food library.
 
 Each row shows the food ID, name, and any active flags (`ignore-shopping`, `on-hand`).
 

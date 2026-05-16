@@ -20,22 +20,53 @@ export function registerFoodCommand(program: Command): void {
     .command('food')
     .description('Manage food ingredients');
 
-  // food list [--limit N] [--search <term>] [--ignored]
+  // food list [--limit N] [--page N] [--all] [--search <term>] [--ignored] [--onhand]
   food
     .command('list')
     .description('List food ingredients')
-    .option('--limit <n>', 'Maximum number of results (default 20)', '20')
+    .option('--limit <n>', 'Results per page (default 20)', '20')
+    .option('--page <n>', 'Page number when using --limit (default 1)', '1')
+    .option('--all', 'Return every matching food (ignores --limit and --page)')
     .option('--search <term>', 'Filter by search term')
     .option('--ignored', 'Only show foods with ignore_shopping set')
+    .option('--onhand', 'Only show foods marked as on hand')
     .option('--json', 'Output as JSON')
     .action(async (opts) => {
       try {
-        const limit = parseInt(opts.limit, 10);
-        if (isNaN(limit) || limit < 1) {
-          printError('--limit must be a positive integer.');
-          process.exit(1);
+        if (opts.all) {
+          const page = parseInt(opts.page, 10);
+          if (!isNaN(page) && page > 1) {
+            printError('--all cannot be used with --page greater than 1.');
+            process.exit(1);
+          }
         }
-        const foods = await listFoods({ limit, search: opts.search, ignoredOnly: opts.ignored });
+
+        let limit: number | undefined;
+        if (!opts.all) {
+          limit = parseInt(opts.limit, 10);
+          if (isNaN(limit) || limit < 1) {
+            printError('--limit must be a positive integer.');
+            process.exit(1);
+          }
+        }
+
+        let page: number | undefined;
+        if (!opts.all) {
+          page = parseInt(opts.page, 10);
+          if (isNaN(page) || page < 1) {
+            printError('--page must be a positive integer.');
+            process.exit(1);
+          }
+        }
+
+        const foods = await listFoods({
+          fetchAll: Boolean(opts.all),
+          limit,
+          page,
+          search: opts.search,
+          ignoredOnly: opts.ignored,
+          onhandOnly: opts.onhand,
+        });
         if (opts.json) {
           printJson(foods);
         } else {

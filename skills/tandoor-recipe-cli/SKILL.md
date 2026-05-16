@@ -80,7 +80,7 @@ tandoor <command> [options]
 **Food Ingredients:**
 | Command | Description |
 |---|---|
-| `food list [--limit N] [--search TERM] [--ignored]` | List food ingredients |
+| `food list [--limit N] [--page N] [--all] [--search TERM] [--ignored] [--onhand]` | List food ingredients |
 
 **Cook Logs:**
 | Command | Description |
