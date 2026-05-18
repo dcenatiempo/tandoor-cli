@@ -1,10 +1,16 @@
 // Tandoor API type definitions
 
+export interface SupermarketCategory {
+  id: number;
+  name: string;
+}
+
 export interface Food {
   id: number;
   name: string;
   ignore_shopping?: boolean;
   food_onhand?: boolean;
+  supermarket_category?: SupermarketCategory | null;
 }
 
 export interface Unit {
@@ -65,12 +71,21 @@ export interface MealType {
   created_by: number;
 }
 
+export interface ShoppingListRecipe {
+  id: number;
+  recipe: number | null;
+  mealplan: number | null;
+  servings: number;
+}
+
 export interface ShoppingListEntry {
   id: number;
   food: Food;
   unit: Unit | null;
   amount: number;
   checked: boolean;
+  list_recipe: number | null;
+  list_recipe_data: ShoppingListRecipe | null;
 }
 
 export interface TandoorUser {

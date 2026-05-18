@@ -106,21 +106,50 @@ export function formatMealPlan(entry: MealPlan): void {
   );
 }
 
-// 7.4 — shopping list entries
+// 7.4 — shopping list entries, grouped by supermarket category
 export function formatShoppingList(entries: ShoppingListEntry[]): void {
   if (entries.length === 0) {
     console.log(dim('Shopping list is empty.'));
     return;
   }
 
-  entries.forEach(e => {
+  // Partition into categorised and uncategorised groups
+  const groups = new Map<string, ShoppingListEntry[]>();
+  const uncategorised: ShoppingListEntry[] = [];
+
+  for (const e of entries) {
+    const cat = e.food.supermarket_category?.name;
+    if (cat) {
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(e);
+    } else {
+      uncategorised.push(e);
+    }
+  }
+
+  const printEntry = (e: ShoppingListEntry) => {
     const amount  = e.amount !== 0 ? String(e.amount) : '';
     const unit    = e.unit ? e.unit.name : '';
     const food    = e.food.name;
     const parts   = [amount, unit, food].filter(Boolean).join(' ');
     const checked = e.checked ? green('[✓]') : '[ ]';
-    console.log(`${checked} ${parts}`);
-  });
+    console.log(`  ${checked} ${parts}`);
+  };
+
+  // Print categorised groups in alphabetical order
+  const sortedCategories = [...groups.keys()].sort();
+  for (const cat of sortedCategories) {
+    console.log(bold(cat));
+    groups.get(cat)!.forEach(printEntry);
+  }
+
+  // Uncategorised items last, under an "Other" heading (only if mixed with categorised)
+  if (uncategorised.length > 0) {
+    if (groups.size > 0) {
+      console.log(bold(dim('Other')));
+    }
+    uncategorised.forEach(printEntry);
+  }
 }
 
 // 7.5 — food list

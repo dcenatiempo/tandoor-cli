@@ -266,8 +266,33 @@ describe('formatShoppingList()', () => {
   let logSpy: ReturnType<typeof vi.spyOn>;
 
   const entries: ShoppingListEntry[] = [
-    { id: 1, food: { id: 1, name: 'milk' }, unit: { id: 1, name: 'L' }, amount: 2, checked: false },
-    { id: 2, food: { id: 2, name: 'eggs' }, unit: null, amount: 6, checked: true },
+    {
+      id: 1,
+      food: { id: 1, name: 'milk', supermarket_category: { id: 1, name: 'Dairy' } },
+      unit: { id: 1, name: 'L' },
+      amount: 2,
+      checked: false,
+      list_recipe: null,
+      list_recipe_data: null,
+    },
+    {
+      id: 2,
+      food: { id: 2, name: 'eggs', supermarket_category: { id: 1, name: 'Dairy' } },
+      unit: null,
+      amount: 6,
+      checked: true,
+      list_recipe: null,
+      list_recipe_data: null,
+    },
+    {
+      id: 3,
+      food: { id: 3, name: 'bread', supermarket_category: null },
+      unit: null,
+      amount: 1,
+      checked: false,
+      list_recipe: null,
+      list_recipe_data: null,
+    },
   ];
 
   beforeEach(() => {
@@ -308,6 +333,62 @@ describe('formatShoppingList()', () => {
     formatShoppingList([entries[1]]);
     const calls = logSpy.mock.calls.flat().join('\n');
     expect(calls).toContain('eggs');
+  });
+
+  it('prints category heading for categorised items', () => {
+    formatShoppingList(entries);
+    const calls = logSpy.mock.calls.flat().join('\n');
+    expect(calls).toContain('Dairy');
+  });
+
+  it('prints "Other" heading when uncategorised items are mixed with categorised', () => {
+    formatShoppingList(entries);
+    const calls = logSpy.mock.calls.flat().join('\n');
+    expect(calls).toContain('Other');
+    expect(calls).toContain('bread');
+  });
+
+  it('does not print "Other" heading when all items are uncategorised', () => {
+    const uncatEntries: ShoppingListEntry[] = [
+      {
+        id: 4,
+        food: { id: 4, name: 'salt', supermarket_category: null },
+        unit: null,
+        amount: 1,
+        checked: false,
+        list_recipe: null,
+        list_recipe_data: null,
+      },
+    ];
+    formatShoppingList(uncatEntries);
+    const calls = logSpy.mock.calls.flat().join('\n');
+    expect(calls).not.toContain('Other');
+    expect(calls).toContain('salt');
+  });
+
+  it('sorts categories alphabetically', () => {
+    const multiCatEntries: ShoppingListEntry[] = [
+      {
+        id: 5,
+        food: { id: 5, name: 'steak', supermarket_category: { id: 2, name: 'Meat' } },
+        unit: null, amount: 1, checked: false, list_recipe: null, list_recipe_data: null,
+      },
+      {
+        id: 6,
+        food: { id: 6, name: 'apple', supermarket_category: { id: 3, name: 'Produce' } },
+        unit: null, amount: 3, checked: false, list_recipe: null, list_recipe_data: null,
+      },
+      {
+        id: 7,
+        food: { id: 7, name: 'cheddar', supermarket_category: { id: 1, name: 'Dairy' } },
+        unit: null, amount: 1, checked: false, list_recipe: null, list_recipe_data: null,
+      },
+    ];
+    formatShoppingList(multiCatEntries);
+    const headings = logSpy.mock.calls
+      .flat()
+      .filter((line) => ['Dairy', 'Meat', 'Produce'].includes(line as string));
+    expect(headings).toEqual(['Dairy', 'Meat', 'Produce']);
   });
 });
 

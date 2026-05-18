@@ -7,6 +7,7 @@ import {
   checkAllShoppingEntries,
   clearCheckedEntries,
 } from '../api/shopping';
+import { toShoppingListPayload } from '../api/shopping-payload';
 import { formatShoppingList, printSuccess, printError } from '../output/formatter';
 import { addFormatOption, resolveFormat, emitOutput } from '../output/format-option';
 
@@ -38,7 +39,7 @@ export function registerShoppingCommand(program: Command): void {
       const format = resolveFormat(opts);
       emitOutput(format, {
         text: () => formatShoppingList(entries),
-        json: () => entries,
+        json: () => toShoppingListPayload(entries),
         api: () => entries,
       });
     } catch (err: unknown) {

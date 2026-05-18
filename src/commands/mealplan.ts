@@ -141,7 +141,12 @@ export function registerMealplanCommand(program: Command): void {
           if (skipped.length > 0) {
             console.log(`\nSkipped ${skipped.length} ingredient(s):`);
             skipped.forEach((s) => {
-              const reason = s.reason === 'food_onhand' ? 'on hand' : 'ignore shopping';
+              const reason =
+                s.reason === 'food_onhand'
+                  ? 'on hand'
+                  : s.reason === 'already_on_list'
+                    ? 'already on list'
+                    : 'ignore shopping';
               console.log(`  ⊘ ${s.food}  (${reason})`);
             });
           }

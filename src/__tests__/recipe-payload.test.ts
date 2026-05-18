@@ -49,13 +49,13 @@ describe('recipeToCreatePayload()', () => {
     expect(payload.id).toBe(42);
     expect(payload).not.toHaveProperty('keywords');
     expect(payload).not.toHaveProperty('created_at');
-    expect(payload.steps[0].ingredients[0]).toEqual({
+    expect(payload.steps?.[0]?.ingredients?.[0]).toEqual({
       food: { name: 'pasta' },
       unit: { name: 'g' },
       amount: 200,
       order: 0,
     });
-    expect(payload.steps[0].ingredients[1]).toEqual({
+    expect(payload.steps?.[0]?.ingredients?.[1]).toEqual({
       food: { name: 'salt' },
       unit: null,
       amount: 1,
