@@ -1,7 +1,7 @@
 ---
 name: tandoor-recipe-cli
 description: Manage recipes, meal plans, and shopping lists on a Tandoor Recipe Manager instance via CLI.
-version: 1.4.0
+version: 1.5.0
 compatibility: ">=18"
 license: MIT
 metadata:
