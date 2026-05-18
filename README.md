@@ -636,7 +636,7 @@ tandoor food list --format api
 
 **Tip:** Combine with `--search` to narrow the scan (e.g. `tandoor food list --onhand --search milk`). `--all` with `--ignored` or `--onhand` walks the full food library.
 
-Each row shows the food ID, name, and any active flags (`ignore-shopping`, `on-hand`).
+Each row shows the food ID, name, and any active flags (`ignore-shopping`, `on-hand`, and the assigned grocery category if set).
 
 #### `tandoor food edit <id-or-name>`
 
@@ -676,6 +676,53 @@ tandoor food onhand eggs --unset
 
 - `--unset` — clear the on-hand flag
 - `--format api` — output the updated food as raw JSON (`--json` deprecated alias)
+
+---
+
+### Grocery Categories
+
+Grocery categories (supermarket categories) let you group food items by where they're found in the store — Dairy, Produce, Meat, etc. The shopping list text output automatically groups items by category when categories are assigned.
+
+#### `tandoor category list`
+
+List all supermarket categories, sorted alphabetically.
+
+```bash
+tandoor category list
+tandoor category list --format json
+tandoor category list --format api
+```
+
+#### `tandoor category uncategorised`
+
+List food items that have no supermarket category assigned. Useful for finding foods to categorise.
+
+```bash
+tandoor category uncategorised
+tandoor category uncategorised --search pasta   # narrow by name
+tandoor category uncategorised --format json
+```
+
+- `--search <term>` — filter uncategorised foods by name
+
+#### `tandoor category set <food-id-or-name>`
+
+Assign a supermarket category to a food item, or remove it. Accepts either a numeric food ID or an exact name (case-insensitive). Category can be specified by name or numeric ID.
+
+```bash
+tandoor category set "olive oil" --category Oils
+tandoor category set milk --category Dairy
+tandoor category set 42 --category "Canned Goods"   # by food ID
+tandoor category set 7 --category 3                 # by food ID and category ID
+tandoor category set milk --unset                   # remove category
+tandoor category set "olive oil" --category Oils --format json
+```
+
+- `--category <name-or-id>` — category to assign (required unless `--unset`)
+- `--unset` — remove the category from the food item
+- `--format api` — output the updated food as raw JSON
+
+**Tip:** Run `tandoor category list` to see available categories, then `tandoor category uncategorised` to find foods that still need one.
 
 ---
 

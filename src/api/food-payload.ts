@@ -5,6 +5,7 @@ export interface FoodListPayload {
   name: string;
   onhand: boolean;
   ignore_shopping: boolean;
+  category: string | null;
 }
 
 export function foodToListPayload(food: Food): FoodListPayload {
@@ -13,6 +14,7 @@ export function foodToListPayload(food: Food): FoodListPayload {
     name: food.name,
     onhand: food.food_onhand ?? false,
     ignore_shopping: food.ignore_shopping ?? false,
+    category: food.supermarket_category?.name ?? null,
   };
 }
 

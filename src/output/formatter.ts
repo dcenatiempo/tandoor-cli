@@ -163,6 +163,7 @@ export function formatFoodList(foods: Food[]): void {
     const flags: string[] = [];
     if (f.ignore_shopping) flags.push(dim('ignore-shopping'));
     if (f.food_onhand)     flags.push(dim('on-hand'));
+    if (f.supermarket_category) flags.push(dim(f.supermarket_category.name));
     const suffix = flags.length > 0 ? '  ' + flags.join('  ') : '';
     console.log(`${dim(`[${f.id}]`)} ${cyan(f.name)}${suffix}`);
   });

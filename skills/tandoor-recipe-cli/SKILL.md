@@ -105,6 +105,12 @@ Commands that print data accept **`--format text|json|api`** (default: `text`):
 |---|---|
 | `food list [--limit N] [--page N] [--all] [--search TERM] [--ignored] [--onhand]` | List food ingredients |
 
+**Grocery Categories:**
+| Command | Description |
+|---|---|
+| `category list` | List all supermarket categories (sorted A-Z) |
+| `category uncategorised [--search TERM]` | List food items with no category assigned |
+
 **Cook Logs:**
 | Command | Description |
 |---|---|
@@ -134,6 +140,8 @@ Commands that print data accept **`--format text|json|api`** (default: `text`):
 | `food edit <id\|name> --ignore-shopping <true\|false>` | Edit a food's ignore_shopping flag | ✓ Before execution |
 | `food ignore <id\|name> [--unset]` | Set or clear ignore_shopping by ID or name | ✓ Before execution |
 | `food onhand <id\|name> [--unset]` | Set or clear the on-hand flag by ID or name | ✓ Before execution |
+| `category set <food-id\|name> --category <name\|id>` | Assign a grocery category to a food item | ✓ Before execution |
+| `category set <food-id\|name> --unset` | Remove the category from a food item | ✓ Before execution |
 | `cooklog add --recipe ID --servings N [--rating 1-5] [--date ISO8601]` | Add a cook log entry | ✓ Before execution |
 | `cooklog update <id> --recipe ID --servings N [--rating 1-5] [--date ISO8601]` | Update a cook log entry | ✓ Before execution |
 
@@ -340,6 +348,26 @@ tandoor shopping add --food flour --amount 500 --unit g
 # Agent should first ask: "This will mark ALL shopping items as checked. Confirm?"
 # Only after explicit confirmation:
 tandoor shopping check --all
+```
+
+**Grocery category example — organise foods for a better shopping list:**
+```bash
+# Read example — see what categories exist:
+tandoor category list
+
+# Read example — find foods with no category yet:
+tandoor category uncategorised
+tandoor category uncategorised --search pasta
+
+# Agent should first ask: "I will assign 'milk' to the Dairy category. Proceed?"
+# Only after user confirms:
+tandoor category set milk --category Dairy
+tandoor category set "olive oil" --category Oils
+tandoor category set 42 --category "Canned Goods"   # by food ID
+
+# Agent should first ask: "I will remove the category from 'milk'. Proceed?"
+# Only after user confirms:
+tandoor category set milk --unset
 ```
 
 **Cook log example — track when you cook a recipe:**

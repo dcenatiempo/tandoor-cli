@@ -23,12 +23,14 @@ describe('foodsToListPayload()', () => {
         name: 'olive oil',
         onhand: true,
         ignore_shopping: false,
+        category: null,
       },
       {
         id: 2,
         name: 'salt',
         onhand: false,
         ignore_shopping: false,
+        category: null,
       },
     ]);
   });
