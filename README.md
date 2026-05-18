@@ -576,26 +576,35 @@ Add a cook log entry to track when you cooked a recipe.
 ```bash
 tandoor cooklog add --recipe 42 --servings 4
 tandoor cooklog add --recipe 42 --servings 4 --rating 5
+tandoor cooklog add --recipe 42 --servings 4 --rating 5 --comment "Kids loved it"
 tandoor cooklog add --recipe 42 --servings 4 --rating 5 --date "2026-04-27T04:00:00.000Z"
+tandoor cooklog add --recipe 42 --servings 4 --rating 5 --comment "Added extra garlic" --date "2026-04-27T04:00:00.000Z"
 ```
 
 - `--recipe <id>` — recipe ID (required)
 - `--servings <number>` — number of servings made (required)
 - `--rating <1-5>` — optional rating from 1 to 5
+- `--comment <text>` — optional notes about the cook (e.g. "Added extra garlic", "Kids loved it")
 - `--date <ISO8601>` — optional date/time in ISO 8601 format (defaults to now)
 - `--format api` — output the created log as raw JSON (`--json` deprecated alias)
 
 #### `tandoor cooklog update <id>`
 
-Update an existing cook log entry.
+Update an existing cook log entry. At least one option is required.
 
 ```bash
-tandoor cooklog update 2 --recipe 42 --servings 6 --rating 4
-tandoor cooklog update 2 --recipe 42 --servings 6 --rating 4 --date "2026-04-27T04:00:00.000Z"
+tandoor cooklog update 2 --rating 4
+tandoor cooklog update 2 --comment "Next time add more garlic"
+tandoor cooklog update 2 --servings 6 --rating 4 --comment "Doubled the recipe"
+tandoor cooklog update 2 --date "2026-04-27T04:00:00.000Z"
 ```
 
-- All options are the same as `cooklog add`
-- The `<id>` parameter specifies which cook log entry to update
+- `--recipe <id>` — change the associated recipe
+- `--servings <number>` — update the number of servings
+- `--rating <1-5>` — update the rating
+- `--comment <text>` — add or update notes about the cook
+- `--date <ISO8601>` — update the date/time
+- `--format api` — output the updated log as raw JSON
 
 #### `tandoor cooklog delete <id>`
 

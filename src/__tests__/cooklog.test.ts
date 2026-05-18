@@ -68,4 +68,22 @@ describe('buildCookLogPatchBody()', () => {
       buildCookLogPatchBody({ recipe: 31, rating: 5 }),
     ).toEqual({ recipe: 31, rating: 5 });
   });
+
+  it('includes comment when provided', () => {
+    expect(buildCookLogPatchBody({ comment: 'Turned out great!' })).toEqual({
+      comment: 'Turned out great!',
+    });
+  });
+
+  it('includes comment alongside other fields', () => {
+    expect(buildCookLogPatchBody({ rating: 4, comment: 'A bit salty' })).toEqual({
+      rating: 4,
+      comment: 'A bit salty',
+    });
+  });
+
+  it('does not include comment when not provided', () => {
+    const body = buildCookLogPatchBody({ servings: 2 });
+    expect(body).not.toHaveProperty('comment');
+  });
 });

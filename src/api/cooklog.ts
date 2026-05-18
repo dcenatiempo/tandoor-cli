@@ -142,12 +142,14 @@ export async function createCookLog(
   servings: number,
   rating?: number,
   createdAt?: string,
+  comment?: string,
 ): Promise<CookLog> {
   const payload: {
     recipe: number;
     servings: number;
     rating?: number;
     created_at?: string;
+    comment?: string;
   } = {
     recipe: recipeId,
     servings,
@@ -161,6 +163,10 @@ export async function createCookLog(
     payload.created_at = createdAt;
   }
 
+  if (comment !== undefined) {
+    payload.comment = comment;
+  }
+
   const res = await apiClient.post<CookLog>('/cook-log/', payload);
   return res.data;
 }
@@ -170,6 +176,7 @@ export interface CookLogUpdatePatch {
   servings?: number;
   rating?: number;
   createdAt?: string;
+  comment?: string;
 }
 
 export async function getCookLog(id: number): Promise<CookLog> {
@@ -183,18 +190,21 @@ export function buildCookLogPatchBody(patch: CookLogUpdatePatch): {
   servings?: number;
   rating?: number;
   created_at?: string;
+  comment?: string;
 } {
   const body: {
     recipe?: number;
     servings?: number;
     rating?: number;
     created_at?: string;
+    comment?: string;
   } = {};
 
   if (patch.recipe !== undefined) body.recipe = patch.recipe;
   if (patch.servings !== undefined) body.servings = patch.servings;
   if (patch.rating !== undefined) body.rating = patch.rating;
   if (patch.createdAt !== undefined) body.created_at = patch.createdAt;
+  if (patch.comment !== undefined) body.comment = patch.comment;
 
   return body;
 }

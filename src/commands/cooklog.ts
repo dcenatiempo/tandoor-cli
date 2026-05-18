@@ -211,6 +211,7 @@ export function registerCooklogCommand(program: Command): void {
       .requiredOption('--recipe <id>', 'Recipe ID')
       .requiredOption('--servings <number>', 'Number of servings')
       .option('--rating <1-5>', 'Rating from 1 to 5')
+      .option('--comment <text>', 'Notes or comment about the cook')
       .option('--date <ISO8601>', 'Date/time in ISO 8601 format (e.g., 2026-04-27T04:00:00.000Z)'),
   ).action(async (opts) => {
     try {
@@ -223,7 +224,7 @@ export function registerCooklogCommand(program: Command): void {
         process.exit(1);
       }
 
-      const entry = await createCookLog(recipeId, servings, rating, opts.date);
+      const entry = await createCookLog(recipeId, servings, rating, opts.date, opts.comment);
 
       const format = resolveFormat(opts);
       emitOutput(format, {
@@ -231,8 +232,9 @@ export function registerCooklogCommand(program: Command): void {
           printSuccess(`Added cook log entry #${entry.id}.`);
           const date = new Date(entry.created_at).toLocaleDateString();
           const ratingStr = entry.rating !== null ? `★${entry.rating}` : 'no rating';
+          const commentStr = entry.comment ? ` - "${entry.comment}"` : '';
           console.log(
-            `Recipe ${entry.recipe} - ${entry.servings} servings - ${ratingStr} - ${date}`,
+            `Recipe ${entry.recipe} - ${entry.servings} servings - ${ratingStr} - ${date}${commentStr}`,
           );
         },
         json: () => entry,
@@ -251,6 +253,7 @@ export function registerCooklogCommand(program: Command): void {
       .option('--recipe <id>', 'Recipe ID')
       .option('--servings <number>', 'Number of servings')
       .option('--rating <1-5>', 'Rating from 1 to 5')
+      .option('--comment <text>', 'Notes or comment about the cook')
       .option('--date <ISO8601>', 'Date/time in ISO 8601 format (e.g., 2026-04-27T04:00:00.000Z)'),
   ).action(async (id: string, opts) => {
     try {
@@ -264,10 +267,11 @@ export function registerCooklogCommand(program: Command): void {
         opts.recipe !== undefined ||
         opts.servings !== undefined ||
         opts.rating !== undefined ||
+        opts.comment !== undefined ||
         opts.date !== undefined;
 
       if (!hasUpdate) {
-        printError('At least one of --recipe, --servings, --rating, or --date is required.');
+        printError('At least one of --recipe, --servings, --rating, --comment, or --date is required.');
         process.exit(1);
       }
 
@@ -276,6 +280,7 @@ export function registerCooklogCommand(program: Command): void {
         servings?: number;
         rating?: number;
         createdAt?: string;
+        comment?: string;
       } = {};
 
       if (opts.recipe !== undefined) {
@@ -305,6 +310,10 @@ export function registerCooklogCommand(program: Command): void {
         patch.rating = rating;
       }
 
+      if (opts.comment !== undefined) {
+        patch.comment = opts.comment;
+      }
+
       if (opts.date !== undefined) {
         patch.createdAt = opts.date;
       }
@@ -317,8 +326,9 @@ export function registerCooklogCommand(program: Command): void {
           printSuccess(`Updated cook log entry #${entry.id}.`);
           const date = new Date(entry.created_at).toLocaleDateString();
           const ratingStr = entry.rating !== null ? `★${entry.rating}` : 'no rating';
+          const commentStr = entry.comment ? ` - "${entry.comment}"` : '';
           console.log(
-            `Recipe ${entry.recipe} - ${entry.servings} servings - ${ratingStr} - ${date}`,
+            `Recipe ${entry.recipe} - ${entry.servings} servings - ${ratingStr} - ${date}${commentStr}`,
           );
         },
         json: () => entry,

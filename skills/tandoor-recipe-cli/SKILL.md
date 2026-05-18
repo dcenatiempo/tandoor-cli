@@ -142,8 +142,8 @@ Commands that print data accept **`--format text|json|api`** (default: `text`):
 | `food onhand <id\|name> [--unset]` | Set or clear the on-hand flag by ID or name | ✓ Before execution |
 | `category set <food-id\|name> --category <name\|id>` | Assign a grocery category to a food item | ✓ Before execution |
 | `category set <food-id\|name> --unset` | Remove the category from a food item | ✓ Before execution |
-| `cooklog add --recipe ID --servings N [--rating 1-5] [--date ISO8601]` | Add a cook log entry | ✓ Before execution |
-| `cooklog update <id> --recipe ID --servings N [--rating 1-5] [--date ISO8601]` | Update a cook log entry | ✓ Before execution |
+| `cooklog add --recipe ID --servings N [--rating 1-5] [--comment TEXT] [--date ISO8601]` | Add a cook log entry | ✓ Before execution |
+| `cooklog update <id> [--recipe ID] [--servings N] [--rating 1-5] [--comment TEXT] [--date ISO8601]` | Update a cook log entry | ✓ Before execution |
 
 #### Destructive Operations (Require Explicit Confirmation)
 
@@ -375,6 +375,7 @@ tandoor category set milk --unset
 # Agent should first ask: "I will add a cook log entry for recipe 42 (4 servings, rating 5). Proceed?"
 # Only after user confirms:
 tandoor cooklog add --recipe 42 --servings 4 --rating 5
+tandoor cooklog add --recipe 42 --servings 4 --rating 5 --comment "Kids loved it"
 
 # Read example — list cook logs for a specific recipe:
 tandoor cooklog list --recipe 42 --format api
@@ -390,6 +391,10 @@ tandoor cooklog ingredient eggs --min-rating 4
 
 # Read example — find poorly-rated recipes from last month (1-2 stars):
 tandoor cooklog list --startdate 2026-04-01 --enddate 2026-04-30 --max-rating 2
+
+# Agent should first ask: "I will update cook log 2 with a new comment. Proceed?"
+# Only after user confirms:
+tandoor cooklog update 2 --comment "Next time add more garlic"
 
 # Agent should first ask: "This will delete cook log entry 2. Confirm?"
 # Only after explicit confirmation:
