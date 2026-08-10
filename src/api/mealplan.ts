@@ -13,6 +13,17 @@ export async function listMealPlans(options?: {
   return res.data.results;
 }
 
+/**
+ * The name to show for a meal plan entry.
+ *
+ * A slot does not have to reference a recipe — Tandoor lets you plan "Takeaway"
+ * or "At Mum's" as a bare `title` — so `recipe` is null for those and the title
+ * is the only label there is.
+ */
+export function mealPlanLabel(entry: MealPlan): string {
+  return entry.recipe?.name || entry.title || '(untitled)';
+}
+
 export async function listMealTypes(): Promise<MealType[]> {
   const res = await apiClient.get<PaginatedResponse<MealType>>('/meal-type/');
   return res.data.results;

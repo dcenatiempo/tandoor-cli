@@ -129,15 +129,19 @@ export interface SkippedIngredient {
 export async function addMealPlanIngredientsToShopping(
   startdate: string,
   enddate: string,
-): Promise<{ added: AddedIngredient[]; skipped: SkippedIngredient[] }> {
+): Promise<{ added: AddedIngredient[]; skipped: SkippedIngredient[]; plansFound: number }> {
   const mealPlans = await listMealPlans({ startdate, enddate });
 
   if (mealPlans.length === 0) {
-    return { added: [], skipped: [] };
+    return { added: [], skipped: [], plansFound: 0 };
   }
 
-  // Fetch recipes for all unique recipe IDs up front
-  const uniqueRecipeIds = [...new Set(mealPlans.map((mp) => mp.recipe.id))];
+  // Fetch recipes for all unique recipe IDs up front. Entries with no recipe —
+  // bare-title slots like "Takeaway" — have no ingredients to contribute, so
+  // they are skipped rather than crashing the run.
+  const uniqueRecipeIds = [
+    ...new Set(mealPlans.flatMap((mp) => (mp.recipe ? [mp.recipe.id] : []))),
+  ];
   const recipeList = await Promise.all(uniqueRecipeIds.map((id) => getRecipe(id)));
   const recipeMap = new Map(recipeList.map((r) => [r.id, r]));
 
@@ -171,6 +175,7 @@ export async function addMealPlanIngredientsToShopping(
   const skipped: SkippedIngredient[] = [];
 
   for (const mealPlan of mealPlans) {
+    if (!mealPlan.recipe) continue;
     const recipe = recipeMap.get(mealPlan.recipe.id);
     if (!recipe) continue;
 
@@ -206,5 +211,5 @@ export async function addMealPlanIngredientsToShopping(
     }
   }
 
-  return { added, skipped };
+  return { added, skipped, plansFound: mealPlans.length };
 }

@@ -116,12 +116,23 @@ export function registerMealplanCommand(program: Command): void {
         process.exit(1);
       }
 
-      const { added, skipped } = await addMealPlanIngredientsToShopping(opts.startdate, opts.enddate);
+      const { added, skipped, plansFound } = await addMealPlanIngredientsToShopping(
+        opts.startdate,
+        opts.enddate,
+      );
       const result = { added: added.map((a) => a.entry), skipped };
 
       const format = resolveFormat(opts);
       if (format === 'text' && added.length === 0 && skipped.length === 0) {
-        console.log('No meal plan entries found in the given date range.');
+        // Distinguish "nothing planned" from "planned, but nothing to shop for" —
+        // entries without a recipe (e.g. "Takeaway") contribute no ingredients,
+        // and reporting those as "no entries found" is simply untrue.
+        console.log(
+          plansFound === 0
+            ? 'No meal plan entries found in the given date range.'
+            : `No ingredients to add: the ${plansFound} meal plan ` +
+                `${plansFound === 1 ? 'entry' : 'entries'} in this range contributed none.`,
+        );
         return;
       }
 
