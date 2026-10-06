@@ -75,10 +75,14 @@ const recipeArb: fc.Arbitrary<Recipe> = fc.record({
 
 const mealPlanArb: fc.Arbitrary<MealPlan> = fc.record({
   id: fc.integer({ min: 1 }),
-  recipe: fc.record({
-    id: fc.integer({ min: 1 }),
-    name: fc.string({ minLength: 1, maxLength: 50 }),
-  }),
+  recipe: fc.option(
+    fc.record({
+      id: fc.integer({ min: 1 }),
+      name: fc.string({ minLength: 1, maxLength: 50 }),
+    }),
+    { nil: null },
+  ),
+  title: fc.string({ minLength: 1, maxLength: 50 }),
   from_date: fc.constant('2024-06-15T00:00:00Z'),
   to_date: fc.constant('2024-06-15T23:59:59Z'),
   meal_type: fc.record({
@@ -336,7 +340,7 @@ describe('Property 8: Formatter completeness', () => {
     );
   });
 
-  it('formatMealPlan output contains ID, date, meal type, and recipe name', () => {
+  it('formatMealPlan output contains ID, date, meal type, and recipe name or title', () => {
     fc.assert(
       fc.property(mealPlanArb, (entry) => {
         logSpy.mockClear();
@@ -345,7 +349,7 @@ describe('Property 8: Formatter completeness', () => {
         expect(output).toContain(String(entry.id));
         expect(output).toContain(entry.from_date.split('T')[0]);
         expect(output).toContain(entry.meal_type.name);
-        expect(output).toContain(entry.recipe.name);
+        expect(output).toContain(entry.recipe?.name ?? entry.title);
       }),
       { numRuns: 100 },
     );

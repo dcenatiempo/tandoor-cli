@@ -44,6 +44,7 @@ describe('mealPlansToListPayload()', () => {
       {
         id: 7,
         date: '2024-03-10',
+        title: '',
         recipe: {
           id: 42,
           name: 'Pasta Carbonara',
@@ -62,5 +63,19 @@ describe('mealPlansToListPayload()', () => {
     await mealPlansToListPayload([entry, second]);
     expect(getRecipe).toHaveBeenCalledTimes(1);
     expect(getRecipe).toHaveBeenCalledWith(42);
+  });
+
+  it('keeps entries without a recipe, with recipe null and the title', async () => {
+    const noteOnly: MealPlan = { ...entry, id: 9, recipe: null, title: 'Leftover soup' };
+    const payload = await mealPlansToListPayload([entry, noteOnly]);
+    expect(payload[1]).toEqual({
+      id: 9,
+      date: '2024-03-10',
+      title: 'Leftover soup',
+      recipe: null,
+      servings: 4,
+      meal_type: 'Dinner',
+    });
+    expect(getRecipe).toHaveBeenCalledTimes(1);
   });
 });

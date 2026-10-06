@@ -260,6 +260,13 @@ describe('formatMealPlan()', () => {
     const calls = logSpy.mock.calls.flat().join('\n');
     expect(calls).toContain('Dinner');
   });
+
+  it('prints the title when the entry has no recipe', () => {
+    formatMealPlan({ ...entry, recipe: null, title: 'Leftover soup' });
+    const calls = logSpy.mock.calls.flat().join('\n');
+    expect(calls).toContain('Leftover soup');
+    expect(calls).toContain('2024-03-10');
+  });
 });
 
 describe('formatShoppingList()', () => {

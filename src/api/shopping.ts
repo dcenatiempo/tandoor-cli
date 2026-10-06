@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { ShoppingListEntry, PaginatedResponse } from './types';
+import { ShoppingListEntry, PaginatedResponse, MealPlan } from './types';
 import { listMealPlans } from './mealplan';
 import { getRecipe } from './recipes';
 import { getFoodByName } from './food';
@@ -130,7 +130,10 @@ export async function addMealPlanIngredientsToShopping(
   startdate: string,
   enddate: string,
 ): Promise<{ added: AddedIngredient[]; skipped: SkippedIngredient[] }> {
-  const mealPlans = await listMealPlans({ startdate, enddate });
+  // Note-only entries have no recipe and therefore no ingredients to add.
+  const mealPlans = (await listMealPlans({ startdate, enddate })).filter(
+    (mp): mp is MealPlan & { recipe: NonNullable<MealPlan['recipe']> } => mp.recipe !== null,
+  );
 
   if (mealPlans.length === 0) {
     return { added: [], skipped: [] };

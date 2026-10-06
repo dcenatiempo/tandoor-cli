@@ -53,7 +53,8 @@ export interface Recipe {
 
 export interface MealPlan {
   id: number;
-  recipe: { id: number; name: string };
+  // null for note-only entries that are not linked to a recipe
+  recipe: { id: number; name: string } | null;
   from_date: string;     // ISO 8601 datetime
   to_date: string;       // ISO 8601 datetime
   meal_type: { id: number; name: string };
