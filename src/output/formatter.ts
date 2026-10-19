@@ -1,4 +1,5 @@
 import { Recipe, MealPlan, ShoppingListEntry, Food, CookLog } from '../api/types';
+import { mealPlanLabel } from '../api/mealplan';
 
 export type CookLogListEntry = CookLog & { recipe_name: string };
 
@@ -101,7 +102,7 @@ export function formatMealPlan(entry: MealPlan): void {
   // Extract just the date part from the ISO datetime string
   const date = entry.from_date.split('T')[0];
   console.log(
-    `${dim(`[${entry.id}]`)} ${cyan(entry.recipe.name)}` +
+    `${dim(`[${entry.id}]`)} ${cyan(mealPlanLabel(entry))}` +
     `  ${dim(date)}  ${dim(entry.meal_type.name)}`
   );
 }
