@@ -99,10 +99,50 @@ export async function checkAllShoppingEntries(): Promise<ShoppingListEntry[]> {
   return Promise.all(unchecked.map((entry) => checkShoppingEntry(entry.id)));
 }
 
+export async function deleteShoppingEntry(id: number): Promise<void> {
+  await apiClient.delete(`/shopping-list-entry/${id}/`);
+}
+
 export async function clearCheckedEntries(): Promise<void> {
   const all = await fetchAllPages<ShoppingListEntry>('/shopping-list-entry/');
   const checked = all.filter((entry) => entry.checked);
-  await Promise.all(checked.map((entry) => apiClient.delete(`/shopping-list-entry/${entry.id}/`)));
+  await Promise.all(checked.map((entry) => deleteShoppingEntry(entry.id)));
+}
+
+export interface ShoppingDeleteSelector {
+  id?: number;
+  food?: string;
+}
+
+/**
+ * Normalizes a food name for matching: case-insensitive, and tolerant of the
+ * stray or repeated whitespace that comes with typing an item at a prompt.
+ */
+function normalizeFoodName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+/**
+ * Picks the shopping list entries a delete request refers to.
+ *
+ * Split out from the command so the interesting part — resolving "milk" to an
+ * entry, and noticing when that is ambiguous — is testable without HTTP.
+ * Returns every match; whether more than one is acceptable is the caller's
+ * decision, because deleting the wrong row cannot be undone.
+ */
+export function selectShoppingEntriesForDelete(
+  entries: ShoppingListEntry[],
+  selector: ShoppingDeleteSelector,
+): ShoppingListEntry[] {
+  if (selector.id !== undefined) {
+    return entries.filter((entry) => entry.id === selector.id);
+  }
+  if (selector.food !== undefined) {
+    const wanted = normalizeFoodName(selector.food);
+    if (!wanted) return [];
+    return entries.filter((entry) => normalizeFoodName(entry.food?.name ?? '') === wanted);
+  }
+  return [];
 }
 
 export interface AddedIngredient {

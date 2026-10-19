@@ -151,9 +151,16 @@ Commands that print data accept **`--format text|json|api`** (default: `text`):
 |---|---|---|
 | `delete <id> [--force]` | Delete a recipe | ✓✓ Explicit confirmation required |
 | `mealplan delete <id>` | Delete a meal plan entry | ✓✓ Explicit confirmation required |
+| `shopping delete <id>\|--food NAME [--force]` | Delete one shopping list entry | ✓✓ Explicit confirmation required |
 | `shopping clear [--force]` | Clear all checked items | ✓✓ Explicit confirmation (bulk operation) |
 | `shopping check --all` | Mark all items as checked | ✓✓ Explicit confirmation (bulk operation) |
 | `cooklog delete <id>` | Delete a cook log entry | ✓✓ Explicit confirmation required |
+
+> **To remove one item use `shopping delete`, never `check` + `clear`.** `clear`
+> deletes *every* checked entry, so using it to remove a single item also
+> destroys whatever the user ticked off while shopping. `shopping delete`
+> removes exactly the entry named, and refuses an ambiguous name rather than
+> guessing.
 
 #### Administrative Operations (Require Privileged Token + Explicit Confirmation)
 

@@ -369,6 +369,31 @@ tandoor shopping check --all    # check every unchecked entry
 tandoor shopping check --all --format api
 ```
 
+#### `tandoor shopping delete [id]`
+
+Delete a **single** entry, by ID or by food name. Requires `--force` or `--interactive`.
+
+```bash
+tandoor shopping delete 3 --force            # by entry ID
+tandoor shopping delete --food milk --force  # by food name
+tandoor shopping delete --food milk --interactive
+```
+
+Food names match case-insensitively and ignore surrounding or repeated
+whitespace, but must match in full — `--food milk` will not delete
+"milk chocolate".
+
+If a name matches more than one entry, nothing is deleted and the candidates are
+listed so you can pick an ID:
+
+```
+2 entries match "milk". Delete one by ID:
+  20 1 tbsp milk
+  21 2 tsp milk
+```
+
+Use this rather than `check` + `clear` to remove one item — see below.
+
 #### `tandoor shopping clear`
 
 Delete all checked entries. Prompts for confirmation unless `--force` is passed.
@@ -377,6 +402,10 @@ Delete all checked entries. Prompts for confirmation unless `--force` is passed.
 tandoor shopping clear
 tandoor shopping clear --force
 ```
+
+> `clear` is a bulk operation over everything currently checked. To remove one
+> item, use `shopping delete`: reaching for `check` + `clear` instead also
+> deletes entries that were checked off while shopping.
 
 ---
 
